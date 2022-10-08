@@ -1,0 +1,6 @@
+.env
+client_secret.json
+db_cmd.txt
+user_http_test_json_data_v1.txt
+/env
+**/__pycache__
