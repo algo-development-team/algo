@@ -2,6 +2,7 @@ from flask import Flask
 from flask_restful import Api
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 import user
 import auth
 import workspace
@@ -22,6 +23,8 @@ DB_PROJECT_NAME = os.getenv('DB_PROJECT_NAME')
 app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://postgres:{DB_PASSWORD}@{DB_DEVELOPMENT_STAGE}/{DB_PROJECT_NAME}'
 db = SQLAlchemy(app)
 
+migrate = Migrate(app, db)
+
 app.register_blueprint(auth.bp)
 app.register_blueprint(user.bp)
 app.register_blueprint(workspace.bp)
@@ -30,7 +33,7 @@ app.register_blueprint(task.bp)
 
 @app.route('/')
 def hello_world():
-  return f'Algo Backend Main Route'
+  return f'Algo Backend app Route'
 
 if __name__ == '__main__':
   app.run(debug=True)

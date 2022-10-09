@@ -14,7 +14,7 @@ def get_workspace(id):
 
 @bp.route('/', methods=['POST'])
 def create_workspace():
-  from main import db
+  from app import db
   from models import Workspace, get_workspace_type
 
   data = request.get_json()
@@ -37,7 +37,7 @@ def create_workspace():
 
 @bp.route('/<id>', methods=['DELETE'])
 def delete_workspace(id):
-  from main import db
+  from app import db
   from models import Workspace
 
   workspace = Workspace.query.get(id)
@@ -51,7 +51,7 @@ def delete_workspace(id):
 
 @bp.route('/<id>/update-name', methods=['PATCH'])
 def update_name_workspace(id):
-  from main import db
+  from app import db
   from models import Workspace
 
   data = request.get_json()
@@ -68,7 +68,7 @@ def update_name_workspace(id):
 
 @bp.route('/<id>/update-members', methods=['PATCH'])
 def update_members_workspace(id):
-  from main import db
+  from app import db
   from models import Workspace
 
   data = request.get_json()
@@ -85,7 +85,7 @@ def update_members_workspace(id):
 
 @bp.route('/<id>/update-admins', methods=['PATCH'])
 def update_admins_workspace(id):
-  from main import db
+  from app import db
   from models import Workspace
 
   data = request.get_json()
@@ -102,7 +102,7 @@ def update_admins_workspace(id):
 
 @bp.route('/<id>/update-workspace-type', methods=['PATCH'])
 def update_workspace_type_workspace(id):
-  from main import db
+  from app import db
   from models import Workspace, get_workspace_type
 
   data = request.get_json()

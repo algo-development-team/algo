@@ -17,7 +17,7 @@ bp = Blueprint('/api/auth', __name__, url_prefix='/api/auth')
 
 @bp.route('/create-tokens', methods=['PUT'])
 def create_tokens_handler():
-  from main import db
+  from app import db
   from models import User
 
   data = request.get_json()

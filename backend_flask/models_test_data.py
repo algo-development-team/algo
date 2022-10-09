@@ -3,8 +3,9 @@ import datetime
 
 user_name1 = 'YOUR_NAME_HERE'
 user_email1 = 'YOUR_EMAIL_HERE'
+user_picture1 = 'YOUR_USER_PICTURE_HERE'
 user_refresh_token1 = 'YOUR_REFRESH_TOKEN_HERE'
-user1 = User(name=user_name1, email=user_email1, refresh_token=user_refresh_token1)
+user1 = User(name=user_name1, email=user_email1, picture=user_picture1, refresh_token=user_refresh_token1)
 
 workspace_name1 = 'Workspace 1'
 workspace_workspace_type1 = WorkspaceType.WORK
@@ -20,4 +21,4 @@ task_description1 = 'Task 1 Description'
 task_priority1 = Priority.HIGH
 task_deadline = datetime.datetime(2022, 12, 31, 0, 0, 0)
 task_time_length1 = TimeLength.EIGHT_HOURS
-task1 = Task(title=task_title1, description=task_description1, priority=task_priority1, deadline=task_deadline, time_length=task_time_length1, category_id=1)
+task1 = Task(title=task_title1, description=task_description1, priority=task_priority1, deadline=task_deadline, time_length=task_time_length1, user_id=1, category_id=1)

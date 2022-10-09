@@ -77,7 +77,7 @@ def get_user():
 
 @bp.route('/update', methods=['PATCH'])
 def update_user():
-  from main import db
+  from app import db
   from models import User
   
   data = request.get_json()
@@ -100,7 +100,7 @@ def update_user():
 
 @bp.route('/update-rankings', methods=['PATCH'])
 def update_rankings_user():
-  from main import db
+  from app import db
   from models import User
   
   data = request.get_json()
@@ -149,7 +149,7 @@ def update_rankings_user():
 
 @bp.route('/update-checklist', methods=['PATCH'])
 def update_checklist_user():
-  from main import db
+  from app import db
   from models import User
   
   data = request.get_json()

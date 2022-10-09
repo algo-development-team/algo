@@ -14,7 +14,7 @@ def get_category(id):
 
 @bp.route('/', methods=['POST'])
 def create_category():
-  from main import db
+  from app import db
   from models import Category
 
   data = request.get_json()
@@ -31,7 +31,7 @@ def create_category():
 
 @bp.route('/<id>', methods=['DELETE'])
 def delete_category(id):
-  from main import db
+  from app import db
   from models import Category
 
   category = Category.query.get(id)
@@ -45,7 +45,7 @@ def delete_category(id):
 
 @bp.route('/<id>/update-name', methods=['PATCH'])
 def update_name_category(id):
-  from main import db
+  from app import db
   from models import Category
 
   data = request.get_json()

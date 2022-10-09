@@ -15,7 +15,7 @@ def get_task(id):
 
 @bp.route('/', methods=['POST'])
 def create_task():
-  from main import db
+  from app import db
   from models import Task, get_priority, get_time_length
 
   data = request.get_json()
@@ -48,7 +48,7 @@ def create_task():
 
 @bp.route('/<id>', methods=['DELETE'])
 def delete_task(id):
-  from main import db
+  from app import db
   from models import Task
 
   task = Task.query.get(id)
@@ -62,7 +62,7 @@ def delete_task(id):
 
 @bp.route('/<id>/update', methods=['PATCH'])
 def update_task(id):
-  from main import db
+  from app import db
   from models import Task, get_priority, get_time_length
 
   data = request.get_json()
@@ -84,7 +84,7 @@ def update_task(id):
 
 @bp.route('/<id>/update-completed', methods=['PATCH'])
 def update_completed_task(id):
-  from main import db
+  from app import db
   from models import Task
 
   task = Task.query.get(id)
@@ -98,7 +98,7 @@ def update_completed_task(id):
 
 @bp.route('/<id>/update-undo-completed', methods=['PATCH'])
 def update_undo_completed_task(id):
-  from main import db
+  from app import db
   from models import Task
 
   task = Task.query.get(id)
@@ -112,7 +112,7 @@ def update_undo_completed_task(id):
 
 @bp.route('/<id>/update-category', methods=['PATCH'])
 def update_category_task(id):
-  from main import db
+  from app import db
   from models import Task
 
   data = request.get_json()
