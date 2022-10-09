@@ -32,14 +32,11 @@ def create_category():
 @bp.route('/<id>', methods=['DELETE'])
 def delete_category(id):
   from app import db
-  from models import Category
+  from models import User, Workspace, Category
 
   category = Category.query.get(id)
   if category is None:
     return 'Category Not Found', 404
-
-  db.session.delete(category)
-  db.session.commit()
 
   return 'Category Deleted'
 

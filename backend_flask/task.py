@@ -49,11 +49,19 @@ def create_task():
 @bp.route('/<id>', methods=['DELETE'])
 def delete_task(id):
   from app import db
-  from models import Task
+  from models import User, Task
 
   task = Task.query.get(id)
   if task is None:
     return 'Task Not Found', 404
+
+  # remove from the user's checklist if it is contained within the user's checklist
+  if task.user_id is not None:
+    user = User.query.get(task.user_id)
+    checklist = user.checklist[:]
+    if task.id in checklist:
+      user.checklist = [task_id for task_id in checklist if task_id != task.id]
+      db.session.commit()
 
   db.session.delete(task)
   db.session.commit()
@@ -85,11 +93,19 @@ def update_task(id):
 @bp.route('/<id>/update-completed', methods=['PATCH'])
 def update_completed_task(id):
   from app import db
-  from models import Task
+  from models import User, Task
 
   task = Task.query.get(id)
   if task is None:
     return 'Task Not Found', 404
+
+  # remove from the user's checklist if it is contained within the user's checklist
+  if task.user_id is not None:
+    user = User.query.get(task.user_id)
+    checklist = user.checklist[:]
+    if task.id in checklist:
+      user.checklist = [task_id for task_id in checklist if task_id != task.id]
+      db.session.commit()
 
   task.completed = True
   db.session.commit()
@@ -129,13 +145,21 @@ def update_category_task(id):
 @bp.route('/<id>/update-user', methods=['PATCH'])
 def update_user_task(id):
   from app import db
-  from models import Task
+  from models import User, Task
 
   data = request.get_json()
 
   task = Task.query.get(id)
   if task is None:
     return 'Task Not Found', 404
+
+  # remove from the user's checklist if it is contained within the user's checklist
+  if task.user_id is not None:
+    user = User.query.get(task.user_id)
+    checklist = user.checklist[:]
+    if task.id in checklist:
+      user.checklist = [task_id for task_id in checklist if task_id != task.id]
+      db.session.commit()
 
   task.user_id = data['user_id']
   db.session.commit()

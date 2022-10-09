@@ -76,7 +76,7 @@ class User(db.Model):
   urgent_rankings_pnw = db.Column(ARRAY(db.Integer), nullable=False, default=default_rankings)
   deep_rankings_pnw = db.Column(ARRAY(db.Integer), nullable=False, default=default_rankings)
   shallow_rankings_pnw = db.Column(ARRAY(db.Integer), nullable=False, default=default_rankings)
-  tasks = db.relationship('Task', backref='user', lazy=True)
+  tasks = db.relationship('Task', backref='user', lazy=True, cascade='delete, merge, save-update')
 
   def __repr__(self):
     return f'User({self.name}, {self.email}, {self.time_zone}, {self.work_time_range}, {self.sleep_time_range})'    
@@ -112,7 +112,7 @@ class Workspace(db.Model):
   workspace_type = db.Column(Enum(WorkspaceType), nullable=False)
   members = db.Column(ARRAY(db.Integer), nullable=False)
   admins = db.Column(ARRAY(db.Integer), nullable=False)
-  categories = db.relationship('Category', backref='workspace', lazy=True)
+  categories = db.relationship('Category', backref='workspace', lazy=True, cascade='delete, merge, save-update')
 
   def __repr__(self):
     return f'Workspace({self.name}, {self.workspace_type})'
@@ -131,7 +131,7 @@ class Category(db.Model):
   id = db.Column(db.Integer, primary_key=True)
   name = db.Column(db.String(80), nullable=False)
   workspace_id = db.Column(db.Integer, db.ForeignKey('workspace.id'), nullable=False)
-  tasks = db.relationship('Task', backref='category', lazy=True)
+  tasks = db.relationship('Task', backref='category', lazy=True, cascade='delete, merge, save-update')
 
   def __repr__(self):
     return f'Category({self.name})'
