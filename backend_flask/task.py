@@ -153,7 +153,7 @@ def update_user_task(id):
   if task is None:
     return 'Task Not Found', 404
 
-  # remove from the user's checklist if it is contained within the user's checklist
+  # remove task id from the user's checklist if it is contained within the user's checklist
   if task.user_id is not None:
     user = User.query.get(task.user_id)
     checklist = user.checklist[:]

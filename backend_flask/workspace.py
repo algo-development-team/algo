@@ -44,6 +44,7 @@ def delete_workspace(id):
   if workspace is None:
     return 'Workspace Not Found', 404
 
+  # remove task id from the user's checklist if it is contained within the user's checklist
   categories = workspace.categories[:]
   for category in categories:
     tasks = category.tasks

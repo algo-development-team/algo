@@ -37,7 +37,8 @@ def delete_category(id):
   category = Category.query.get(id)
   if category is None:
     return 'Category Not Found', 404
-
+  
+  # remove task id from the user's checklist if it is contained within the user's checklist
   tasks = category.tasks[:]
   for task in tasks:
     if task.user_id is not None:
