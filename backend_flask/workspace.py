@@ -38,11 +38,22 @@ def create_workspace():
 @bp.route('/<id>', methods=['DELETE'])
 def delete_workspace(id):
   from app import db
-  from models import Workspace
+  from models import User, Workspace
 
   workspace = Workspace.query.get(id)
   if workspace is None:
     return 'Workspace Not Found', 404
+
+  categories = workspace.categories[:]
+  for category in categories:
+    tasks = category.tasks
+    for task in tasks:
+      if task.user_id is not None:
+        user = User.query.get(task.user_id)
+        checklist = user.checklist[:]
+        if task.id in checklist:
+          user.checklist = [task_id for task_id in checklist if task_id != task.id]
+          db.session.commit()
 
   db.session.delete(workspace)
   db.session.commit()
