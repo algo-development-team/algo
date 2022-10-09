@@ -125,3 +125,19 @@ def update_category_task(id):
   db.session.commit()
 
   return 'Task Category Updated'
+
+@bp.route('/<id>/update-user', methods=['PATCH'])
+def update_user_task(id):
+  from app import db
+  from models import Task
+
+  data = request.get_json()
+
+  task = Task.query.get(id)
+  if task is None:
+    return 'Task Not Found', 404
+
+  task.user_id = data['user_id']
+  db.session.commit()
+
+  return 'Task User Updated'
