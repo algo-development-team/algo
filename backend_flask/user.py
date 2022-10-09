@@ -86,13 +86,30 @@ def update_user():
   if user is None:
     return 'User Not Found', 404
 
-  else:  
+  else:
+    user.picture = data['picture']
     user.time_zone = data['time_zone']
     user.work_time_range = data['work_time_range']
     user.sleep_time_range = data['sleep_time_range']
     user.work_days = data['work_days']
     user.is_setup = True
 
+    db.session.commit()
+
+  return 'User Updated'
+
+@bp.route('/update-rankings', methods=['PATCH'])
+def update_rankings_user():
+  from main import db
+  from models import User
+  
+  data = request.get_json()
+
+  user = User.query.filter_by(email=data['email']).first()
+  if user is None:
+    return 'User Not Found', 404
+
+  else:  
     # passing all the user rankings by value
     # passing by reference will prevent the fields being updated later on
     rankings_3d_matrix = get_rankings(
@@ -128,7 +145,7 @@ def update_user():
 
     db.session.commit()
 
-  return 'User Updated'
+  return 'User Rankings Updated'
 
 @bp.route('/update-checklist', methods=['PATCH'])
 def update_checklist_user():

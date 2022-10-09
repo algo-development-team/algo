@@ -46,7 +46,7 @@ def create_tokens_handler():
   
     user = User.query.filter_by(email=user_info['email']).first()
     if user is None:
-      user = User(name=user_info['name'], email=user_info['email'], refresh_token=credentials.refresh_token)
+      user = User(name=user_info['name'], email=user_info['email'], picture=user_info['picture'], refresh_token=credentials.refresh_token)
       db.session.add(user)
       db.session.commit()
       print('User Created')

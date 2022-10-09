@@ -23,9 +23,13 @@ def create_task():
   priority = get_priority(data['priority'])
   time_length = get_time_length(data['time_length'])
   deadline = None
+  user_id = None
 
   if data['deadline'] is not None:
     deadline = datetime.strptime(data['deadline'], '%Y-%m-%d')
+
+  if data['user_id'] is not None:
+    user_id = data['user_id']
 
   task = Task(
     title=data['title'],
@@ -33,6 +37,7 @@ def create_task():
     priority=priority,
     time_length=time_length,
     deadline=deadline,
+    user_id=user_id,
     category_id=data['category_id'],
   )
 
@@ -71,6 +76,7 @@ def update_task(id):
   task.priority = get_priority(data['priority'])
   task.time_length = get_time_length(data['time_length'])
   task.deadline = datetime.strptime(data['deadline'], '%Y-%m-%d')
+  task.user_id = data['user_id']
 
   db.session.commit()
 

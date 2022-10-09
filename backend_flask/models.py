@@ -57,6 +57,7 @@ class User(db.Model):
   id = db.Column(db.Integer, primary_key=True)
   name = db.Column(db.String(160), nullable=False)
   email = db.Column(db.String(320), unique=True, nullable=False)
+  picture = db.Column(db.String(160), nullable=False)
   time_zone = db.Column(db.String(80), nullable=False, default=default_timezone)
   refresh_token = db.Column(db.String(160), unique=True, nullable=False)
   work_time_range = db.Column(db.String(80), nullable=False, default=default_work_time_range)
@@ -75,6 +76,7 @@ class User(db.Model):
   urgent_rankings_pnw = db.Column(ARRAY(db.Integer), nullable=False, default=default_rankings)
   deep_rankings_pnw = db.Column(ARRAY(db.Integer), nullable=False, default=default_rankings)
   shallow_rankings_pnw = db.Column(ARRAY(db.Integer), nullable=False, default=default_rankings)
+  tasks = db.relationship('Task', backref='user', lazy=True)
 
   def __repr__(self):
     return f'User({self.name}, {self.email}, {self.time_zone}, {self.work_time_range}, {self.sleep_time_range})'    
@@ -99,7 +101,8 @@ class User(db.Model):
       'shallow_rankings_pw': self.shallow_rankings_pw,
       'urgent_rankings_pnw': self.urgent_rankings_pnw,
       'deep_rankings_pnw': self.deep_rankings_pnw,
-      'shallow_rankings_pnw': self.shallow_rankings_pnw
+      'shallow_rankings_pnw': self.shallow_rankings_pnw,
+      'tasks': [task.serialize() for task in self.tasks]
     }
 
 class Workspace(db.Model):
@@ -147,6 +150,7 @@ class Task(db.Model):
   deadline = db.Column(db.DateTime)
   time_length = db.Column(Enum(TimeLength), nullable=False)
   completed = db.Column(db.Boolean, nullable=False, default=False)
+  user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
   category_id = db.Column(db.Integer, db.ForeignKey('category.id'), nullable=False)
 
   def __repr__(self):
