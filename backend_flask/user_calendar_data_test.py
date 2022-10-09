@@ -12,6 +12,9 @@ else:
   time_min_seconds_not_rounded = get_dt_fifteen_min_rounded([(time_now, time_now)])[0][1]
   time_min = datetime(time_min_seconds_not_rounded.year, time_min_seconds_not_rounded.month, time_min_seconds_not_rounded.day, time_min_seconds_not_rounded.hour, time_min_seconds_not_rounded.minute)
   time_max = time_min + timedelta(weeks=1)
+  # FOR TESTING ONLY
+  # time_min = datetime(2022, 10, 10, 10, 0)
+  # time_max = datetime(2022, 10, 10, 11, 0)
   empty_time_ranges_and_durations = get_empty_time_ranges_and_durations(user.id, time_min, time_max)
   time_ranges = get_dt_fifteen_min_rounded(get_user_events_time_range(user.id, time_min, time_max))
   print('----------------------------------------------------------------')
