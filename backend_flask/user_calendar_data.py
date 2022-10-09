@@ -4,7 +4,7 @@ from google.oauth2.credentials import Credentials
 from dotenv import load_dotenv
 load_dotenv()
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 
 CLIENT_ID = os.getenv('CLIENT_ID')
 CLIENT_SECRET = os.getenv('CLIENT_SECRET')
@@ -45,10 +45,15 @@ def get_user_events_time_range(id, time_min, time_max):
 def get_dt_fifteen_min_rounded(time_ranges):
   # round down in fifteen
   def start_time_round(dt): 
-    return datetime(dt.year, dt.month, dt.day, dt.hour, ((dt.minute // 15) * 15))
+    start_time_round_timedelta = timedelta(minutes=(dt.minute % 15))
+    return dt - start_time_round_timedelta
   # round up in fifteen
   def end_time_round(dt): 
-    return datetime(dt.year, dt.month, dt.day, dt.hour, (((dt.minute // 15) + 1) * 15))
+    end_time_round_timedelta_val = 15 - (dt.minute % 15)
+    if end_time_round_timedelta_val == 15:
+      end_time_round_timedelta_val = 0
+    end_time_round_timedelta = timedelta(minutes=end_time_round_timedelta_val)
+    return dt + end_time_round_timedelta
   time_ranges_rounded = [
     (start_time_round(time_range[0]), 
     end_time_round(time_range[1]))
