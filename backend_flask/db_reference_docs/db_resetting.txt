@@ -7,8 +7,10 @@
 # dropping existing tables method 2
 # open psql shell
 >>> \c db_name
-# repeat the command for all tables
->>> DROP TABLE table_name
+# drop the database
+>>> DROP DATABASE db_name
+# create the database
+>>> CREATE DATABASE db_name
 
 # adding new schemas to the db
 # open python shell
