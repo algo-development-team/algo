@@ -2,7 +2,6 @@ from app import db
 from sqlalchemy import ARRAY, Enum
 import enum
 
-default_timezone = 'Canada/Eastern'
 default_work_time_range = '9:00-17:00'
 default_sleep_time_range = '23:00-7:00'
 default_work_days = [False, True, True, True, True, True, False]
@@ -58,7 +57,6 @@ class User(db.Model):
   name = db.Column(db.String(160), nullable=False)
   email = db.Column(db.String(320), unique=True, nullable=False)
   picture = db.Column(db.String(160), nullable=False)
-  time_zone = db.Column(db.String(80), nullable=False, default=default_timezone)
   refresh_token = db.Column(db.String(160), unique=True, nullable=False)
   work_time_range = db.Column(db.String(80), nullable=False, default=default_work_time_range)
   sleep_time_range = db.Column(db.String(80), nullable=False, default=default_sleep_time_range)
@@ -79,7 +77,7 @@ class User(db.Model):
   tasks = db.relationship('Task', backref='user', lazy=True, cascade='delete, merge, save-update')
 
   def __repr__(self):
-    return f'User({self.name}, {self.email}, {self.time_zone}, {self.work_time_range}, {self.sleep_time_range})'    
+    return f'User({self.name}, {self.email}, {self.work_time_range}, {self.sleep_time_range})'    
 
   def serialize(self):
     return {
@@ -87,7 +85,6 @@ class User(db.Model):
       'name': self.name,
       'email': self.email,
       'picture': self.picture,
-      'time_zone': self.time_zone,
       'refresh_token': self.refresh_token,
       'work_time_range': self.work_time_range,
       'sleep_time_range': self.sleep_time_range,

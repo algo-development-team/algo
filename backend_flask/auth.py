@@ -8,9 +8,9 @@ import os
 
 CLIENT_ID = os.getenv('CLIENT_ID')
 CLIENT_SECRET = os.getenv('CLIENT_SECRET')
-REFRESH_TOKEN = os.getenv('REFRESH_TOKEN')
+REFRESH_TOKEN = os.getenv('REFRESH_TOKEN') # FOR TESTING ONLY
 TOKEN_URI = 'https://oauth2.googleapis.com/token'
-USER_TIMEZONE = 'Canada/Eastern'
+USER_TIMEZONE = 'America/Toronto' # FOR TESTING ONLY
 flow = None
 
 bp = Blueprint('/api/auth', __name__, url_prefix='/api/auth')
@@ -74,7 +74,6 @@ def create_event_handler():
       'timeZone': USER_TIMEZONE,
     },
   }
-
 
   creds = Credentials(token=None, refresh_token=REFRESH_TOKEN, token_uri=TOKEN_URI, client_id=CLIENT_ID, client_secret=CLIENT_SECRET)
   service = build('calendar', 'v3', credentials=creds)

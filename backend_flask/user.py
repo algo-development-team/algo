@@ -88,7 +88,6 @@ def update_user():
 
   else:
     user.picture = data['picture']
-    user.time_zone = data['time_zone']
     user.work_time_range = data['work_time_range']
     user.sleep_time_range = data['sleep_time_range']
     user.work_days = data['work_days']
@@ -127,7 +126,7 @@ def update_rankings_user():
       rankings_pnw_user_specified=data['rankings_pnw_user_specified']
     )
 
-    # debug
+    # DEBUG
     print('rankings_3d_matrix:')
     for rankings_matrix in rankings_3d_matrix:
       for rankings in rankings_matrix:
