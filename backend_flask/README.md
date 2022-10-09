@@ -14,5 +14,6 @@ Note:
 - Get the REFRESH_TOKEN value from authenticating through Google OAuth2.
 - Get the client_secret.json file from Google API Dashboard and place it in the root directory.
 - Install PostgreSQL locally.
+- Run `python app.py` to start the server locally.
 
 ---

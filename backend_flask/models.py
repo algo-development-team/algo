@@ -86,6 +86,7 @@ class User(db.Model):
       'id': self.id,
       'name': self.name,
       'email': self.email,
+      'picture': self.picture,
       'time_zone': self.time_zone,
       'refresh_token': self.refresh_token,
       'work_time_range': self.work_time_range,
