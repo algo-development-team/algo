@@ -252,10 +252,10 @@ def separate_periods_time_ranges(time_ranges, work_time_range, sleep_time_range)
   for time_range in time_ranges:
     period_ranges = get_period_ranges(time_range, parsed_work_time_range, parsed_sleep_time_range)
     # DEBUG
-    print('time_range:')
-    pprint(time_range)
-    print('period_ranges:')
-    pprint(period_ranges)
+    # print('time_range:')
+    # pprint(time_range)
+    # print('period_ranges:')
+    # pprint(period_ranges)
     start_time = time_range[0]
     end_time = time_range[1]
     for i in range(len(period_ranges) - 1):
