@@ -27,8 +27,11 @@ def get_user_events_time_range(id, time_min, time_max):
   user = User.query.get(id)
   creds = Credentials(token=None, refresh_token=user.refresh_token, token_uri=TOKEN_URI, client_id=CLIENT_ID, client_secret=CLIENT_SECRET)
   service = build('calendar', 'v3', credentials=creds)
-  time_min_str = time_min.strftime('%Y-%m-%dT%H:%M:00Z')
-  time_max_str = time_max.strftime('%Y-%m-%dT%H:%M:00Z')
+  # adding buffer time to time_min (previous day - 2h 15 min) and time_max (next day + 2h 15 min)
+  time_min_with_buffer = datetime(time_min.year, time_min.month, time_min.day) - timedelta(days=1, hours=2, minutes=15)
+  time_max_with_buffer = datetime(time_min.year, time_min.month, time_min.day) + timedelta(days=2, hours=2, minutes=15)
+  time_min_str = time_min_with_buffer.strftime('%Y-%m-%dT%H:%M:00Z')
+  time_max_str = time_max_with_buffer.strftime('%Y-%m-%dT%H:%M:00Z')
   events_result = service.events().list(calendarId='primary', timeMin=time_min_str, timeMax=time_max_str, singleEvents=True, orderBy='startTime').execute()
   events = events_result['items']
   remove_dt_tzinfo = lambda dt_tzinfo : datetime(dt_tzinfo.year, dt_tzinfo.month, dt_tzinfo.day, dt_tzinfo.hour, dt_tzinfo.minute) 
@@ -36,7 +39,17 @@ def get_user_events_time_range(id, time_min, time_max):
     remove_dt_tzinfo(datetime.strptime(event['start']['dateTime'], '%Y-%m-%dT%H:%M:%S%z')), 
     remove_dt_tzinfo(datetime.strptime(event['end']['dateTime'], '%Y-%m-%dT%H:%M:%S%z'))) 
     for event in events]
-  return events_time_range
+  # eliminate time ranges that are in the buffer time, where the cut off for events at the edge are at time_min and time_max
+  events_time_range_remove_buffer = []
+  for event_time_range in events_time_range:
+    if event_time_range[0] >= time_min and event_time_range[1] <= time_max:
+      events_time_range_remove_buffer.append(event_time_range)
+    elif event_time_range[0] <= time_min < event_time_range[1]:
+      events_time_range_remove_buffer.append((time_min, event_time_range[1]))
+    elif event_time_range[0] < time_max <= event_time_range[1]:
+      events_time_range_remove_buffer.append((event_time_range[0], time_max))
+
+  return events_time_range_remove_buffer
 
 # parameter specification:
 # time_ranges: [(start_time, end_time), (start_time, end_time), ...]
