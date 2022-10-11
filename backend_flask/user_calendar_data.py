@@ -85,14 +85,13 @@ def get_user_events_time_range(id, time_min, time_max, only_primary=False):
   time_max_with_buffer = datetime(time_min.year, time_min.month, time_min.day) + timedelta(days=2, hours=2, minutes=15)
   time_min_str = time_min_with_buffer.strftime('%Y-%m-%dT%H:%M:00Z')
   time_max_str = time_max_with_buffer.strftime('%Y-%m-%dT%H:%M:00Z')
-  calendar_id_list = get_user_calendar_id_list(id)
-  
   events = []
   result = []
   if only_primary:
     events_result = service.events().list(calendarId='primary', timeMin=time_min_str, timeMax=time_max_str, singleEvents=True, orderBy='startTime').execute()
     events += events_result['items']
   else:
+    calendar_id_list = get_user_calendar_id_list(id)
     for calendar_id in calendar_id_list:
       events_result = service.events().list(calendarId=calendar_id, timeMin=time_min_str, timeMax=time_max_str, singleEvents=True, orderBy='startTime').execute()
       new_events = events_result['items']
