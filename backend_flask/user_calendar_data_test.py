@@ -1,6 +1,7 @@
 from models import User
-from user_calendar_data import get_empty_time_ranges_and_durations, get_dt_fifteen_min_rounded, get_user_events_time_range, get_user_time_zone
+from user_calendar_data import get_empty_time_ranges_and_durations, get_dt_fifteen_min_rounded, get_user_events_time_range, get_user_time_zone, get_user_calendar_list
 from datetime import datetime, timedelta
+from pprint import pprint
 
 def sep():
   print('----------------------------------------------------------------')
@@ -21,7 +22,11 @@ else:
   empty_time_ranges_and_durations = get_empty_time_ranges_and_durations(user.id, time_min, time_max)
   time_ranges = get_dt_fifteen_min_rounded(get_user_events_time_range(user.id, time_min, time_max))
   sep()
-  print('User\'s Time Zone: ' + get_user_time_zone(user.id))
+  print('User\'s Time Zone: ', get_user_time_zone(user.id))
+  sep()
+  sep()
+  print('User\'s Calendar List:')
+  pprint(get_user_calendar_list(user.id))
   sep()
   sep()
   for i in range(len(time_ranges)):

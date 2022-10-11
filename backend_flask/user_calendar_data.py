@@ -10,6 +10,41 @@ CLIENT_ID = os.getenv('CLIENT_ID')
 CLIENT_SECRET = os.getenv('CLIENT_SECRET')
 TOKEN_URI = 'https://oauth2.googleapis.com/token'
 
+def get_user_time_zone(id):
+  user = User.query.get(id)
+  creds = Credentials(token=None, refresh_token=user.refresh_token, token_uri=TOKEN_URI, client_id=CLIENT_ID, client_secret=CLIENT_SECRET)
+  service = build('calendar', 'v3', credentials=creds)
+  time_zone = service.settings().get(setting='timezone').execute()
+  return time_zone['value']
+
+def get_user_calendar_list(id):
+  user = User.query.get(id)
+  creds = Credentials(token=None, refresh_token=user.refresh_token, token_uri=TOKEN_URI, client_id=CLIENT_ID, client_secret=CLIENT_SECRET)
+  service = build('calendar', 'v3', credentials=creds)
+
+  response = service.calendarList().list(
+    maxResults=250,
+    showDeleted=False,
+    showHidden=False,
+  ).execute()
+
+  calendarItems = response.get('items')
+  nextPageToken = response.get('nextPageToken')
+
+  while nextPageToken:
+    response = service.calendarList().list(
+      maxResults=250,
+      showDeleted=False,
+      showHidden=False,
+      pageToken=nextPageToken,
+    ).execute()
+    calendarItems.extend(response.get('items'))
+    nextPageToken = response.get('nextPageToken')
+
+  calendar_list_summary = [calendar['summary'] for calendar in calendarItems]
+ 
+  return calendar_list_summary
+
 # parameters specification:
 # id: user_id that has valid refresh_token (non-test user)
 # time_min: datetime.datetime(year, month, day, hour, min)
@@ -92,13 +127,6 @@ def get_empty_time_ranges_and_durations(id, time_min, time_max):
       empty_time_ranges_durations.append((time_ranges_detupled[i], time_ranges_detupled[i+1], diff))
 
   return empty_time_ranges_durations
-
-def get_user_time_zone(id):
-  user = User.query.get(id)
-  creds = Credentials(token=None, refresh_token=user.refresh_token, token_uri=TOKEN_URI, client_id=CLIENT_ID, client_secret=CLIENT_SECRET)
-  service = build('calendar', 'v3', credentials=creds)
-  time_zone = service.settings().get(setting='timezone').execute()
-  return time_zone['value']
 
 ################################################################
 
