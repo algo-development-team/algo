@@ -81,6 +81,7 @@ def get_tasks_with_highest_relative_priority(id):
   tasks = user.tasks[:]
   
   work_and_personal_tasks = seperate_work_and_personal_tasks(tasks)
+  # DEBUG
   print('work_and_personal_tasks:')
   pprint(work_and_personal_tasks)
 
