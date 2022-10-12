@@ -228,11 +228,15 @@ def get_period_ranges(time_range, work_time_range, sleep_time_range):
   
   return range_limits
 
-def get_period_type(type_before, type_after):
+def get_period_type(type_before, type_after, start_time, work_days):
   if type_before == 'sleep_end' and type_after == 'work_start':
     return { 'type': 'personal'  }
   elif type_before == 'work_start' and type_after == 'work_end':
-    return { 'type': 'work' }
+    is_work_day = work_days[int(start_time.date().strftime('%w'))]
+    if is_work_day:
+      return { 'type': 'work' }
+    else:
+      return { 'type': 'personal' }
   elif type_before == 'work_end' and type_after == 'sleep_start':
     return { 'type': 'personal' }
   elif type_before == 'sleep_start' and type_after == 'sleep_end':
@@ -248,8 +252,12 @@ def get_period_type(type_before, type_after):
 # { 'work': (start_time, end_time)[], 'personal': (start_time, end_time)[] }
 # start_time: datetime.datetime(year, month, day, hour, min)
 # end_time: datetime.datetime(year, month, day, hour, min)
-def separate_periods_time_ranges(time_ranges, work_time_range, sleep_time_range):
-  
+def separate_periods_time_ranges(id, time_ranges, work_time_range, sleep_time_range):
+  from models import User
+
+  user = User.query.get(id)
+  work_days = user.work_days[:]
+
   parsed_work_time_range = parse_user_time_range(work_time_range)
   parsed_sleep_time_range = parse_user_time_range(sleep_time_range)
   work_and_personal_time_ranges = {'work': [], 'personal': []}
@@ -266,7 +274,7 @@ def separate_periods_time_ranges(time_ranges, work_time_range, sleep_time_range)
       if period_ranges[i]['time'] <= start_time < period_ranges[i + 1]['time']:
         # DEBUG
         # print('event starts in period ' + str(i))
-        period_type = get_period_type(period_ranges[i]['type'], period_ranges[i + 1]['type'])
+        period_type = get_period_type(period_ranges[i]['type'], period_ranges[i + 1]['type'], period_ranges[i]['time'], work_days)
         # DEBUG
         # print('period_type: ' + period_type['type'])
         if period_type['type'] != 'sleep':
@@ -298,5 +306,5 @@ def separate_periods_time_ranges(time_ranges, work_time_range, sleep_time_range)
 # end_time: datetime.datetime(year, month, day, hour, min)
 def get_work_and_personal_time_ranges(id, time_min, time_max, work_time_range, sleep_time_range):
   empty_time_ranges = get_empty_time_ranges(id, time_min, time_max)
-  work_and_personal_time_ranges = separate_periods_time_ranges(empty_time_ranges, work_time_range, sleep_time_range)
+  work_and_personal_time_ranges = separate_periods_time_ranges(id, empty_time_ranges, work_time_range, sleep_time_range)
   return work_and_personal_time_ranges

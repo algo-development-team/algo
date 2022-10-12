@@ -17,13 +17,13 @@ else:
   # time_min = datetime(time_min_seconds_not_rounded.year, time_min_seconds_not_rounded.month, time_min_seconds_not_rounded.day, time_min_seconds_not_rounded.hour, time_min_seconds_not_rounded.minute)
   # time_max = time_min + timedelta(days=1)
   # FOR TESTING ONLY
-  time_min = datetime(2022, 10, 11, 0, 0)
-  time_max = datetime(2022, 10, 12, 0, 0)
+  time_min = datetime(2022, 10, 12, 0, 0)
+  time_max = datetime(2022, 10, 13, 0, 0)
   time_ranges = get_dt_fifteen_min_rounded(get_user_events_time_range(user.id, time_min, time_max))
   empty_time_ranges = get_empty_time_ranges(user.id, time_min, time_max)
   work_time_range = '9:00-17:00'
   sleep_time_range = '23:00-7:00'
-  work_and_personal_time_ranges = separate_periods_time_ranges(empty_time_ranges, work_time_range, sleep_time_range)
+  work_and_personal_time_ranges = separate_periods_time_ranges(user.id, empty_time_ranges, work_time_range, sleep_time_range)
 
   sep()
   print('Tested Functions:')

@@ -58,6 +58,21 @@ def seperate_work_and_personal_tasks(tasks):
       work_and_personal_tasks['personal'].append(task)
   return work_and_personal_tasks
 
+def get_relatve_priority_rankings(
+  work_and_personal_time_ranges,
+  work_days,
+  urgent_rankings_ww,
+  shallow_rankings_ww,
+  deep_rankings_ww,
+  urgent_rankings_pw,
+  shallow_rankings_pw,
+  deep_rankings_pw,
+  urgent_rankings_pnw,
+  shallow_rankings_pnw,
+  deep_rankings_pnw
+):
+  pass
+
 def get_tasks_with_highest_relative_priority(id):
   from models import User
   user = User.query.get(id)
@@ -69,6 +84,7 @@ def get_tasks_with_highest_relative_priority(id):
   print('work_and_personal_time_ranges:')
   pprint(work_and_personal_time_ranges)
   
+  work_days = user.work_days[:]
   urgent_rankings_ww = user.urgent_rankings_ww[:]
   deep_rankings_ww = user.deep_rankings_ww[:]
   shallow_rankings_ww = user.shallow_rankings_ww[:]
@@ -84,6 +100,32 @@ def get_tasks_with_highest_relative_priority(id):
   # DEBUG
   print('work_and_personal_tasks:')
   pprint(work_and_personal_tasks)
+
+  # DEBUG
+  print('rankings:')
+  print(urgent_rankings_ww)
+  print(deep_rankings_ww)
+  print(shallow_rankings_ww)
+  print(urgent_rankings_pw)
+  print(deep_rankings_pw)
+  print(shallow_rankings_pw)
+  print(urgent_rankings_pnw)
+  print(deep_rankings_pnw)
+  print(shallow_rankings_pnw)
+
+  relative_priority_rankings = get_relatve_priority_rankings(
+    work_and_personal_time_ranges=work_and_personal_time_ranges,
+    work_days=work_days,
+    urgent_rankings_ww=urgent_rankings_ww,
+    shallow_rankings_ww=shallow_rankings_ww,
+    deep_rankings_ww=deep_rankings_ww,
+    urgent_rankings_pw=urgent_rankings_pw,
+    shallow_rankings_pw=shallow_rankings_pw,
+    deep_rankings_pw=deep_rankings_pw,
+    urgent_rankings_pnw=urgent_rankings_pnw,
+    shallow_rankings_pnw=shallow_rankings_pnw,
+    deep_rankings_pnw=deep_rankings_pnw,
+  )
 
 # TEST
 def test():
