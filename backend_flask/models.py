@@ -103,6 +103,15 @@ class User(db.Model):
       'tasks': [task.serialize() for task in self.tasks]
     }
 
+  def get_work_days(self):
+    return self.work_days[:]
+
+  def get_checklist(self):
+    return self.checklist[:]
+
+  def get_tasks(self):
+    return self.tasks[:]
+
   def get_rankings(self):
     return {
       'urgent_rankings_ww': self.urgent_rankings_ww[:],
@@ -137,6 +146,15 @@ class Workspace(db.Model):
       'categories': [category.serialize() for category in self.categories]
     }
 
+  def get_members(self):
+    return self.members[:]
+
+  def get_admins(self):
+    return self.admins[:]
+
+  def get_categories(self):
+    return self.categories[:]
+
 class Category(db.Model):
   id = db.Column(db.Integer, primary_key=True)
   name = db.Column(db.String(80), nullable=False)
@@ -152,6 +170,9 @@ class Category(db.Model):
       'name': self.name,
       'tasks': [task.serialize() for task in self.tasks]
     }
+
+  def get_tasks(self):
+    return self.tasks[:]
 
 class Task(db.Model):
   id = db.Column(db.Integer, primary_key=True)

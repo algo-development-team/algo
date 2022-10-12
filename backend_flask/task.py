@@ -58,7 +58,7 @@ def delete_task(id):
   # remove from the user's checklist if it is contained within the user's checklist
   if task.user_id is not None:
     user = User.query.get(task.user_id)
-    checklist = user.checklist[:]
+    checklist = user.get_checklist()
     if task.id in checklist:
       user.checklist = [task_id for task_id in checklist if task_id != task.id]
       db.session.commit()
@@ -102,7 +102,7 @@ def update_completed_task(id):
   # remove from the user's checklist if it is contained within the user's checklist
   if task.user_id is not None:
     user = User.query.get(task.user_id)
-    checklist = user.checklist[:]
+    checklist = user.get_checklist()
     if task.id in checklist:
       user.checklist = [task_id for task_id in checklist if task_id != task.id]
       db.session.commit()
@@ -156,7 +156,7 @@ def update_user_task(id):
   # remove task id from the user's checklist if it is contained within the user's checklist
   if task.user_id is not None:
     user = User.query.get(task.user_id)
-    checklist = user.checklist[:]
+    checklist = user.get_checklist()
     if task.id in checklist:
       user.checklist = [task_id for task_id in checklist if task_id != task.id]
       db.session.commit()

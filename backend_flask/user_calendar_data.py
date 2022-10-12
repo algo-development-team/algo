@@ -256,7 +256,7 @@ def separate_periods_time_ranges(id, time_ranges, work_time_range, sleep_time_ra
   from models import User
 
   user = User.query.get(id)
-  work_days = user.work_days[:]
+  work_days = user.get_work_days()
 
   parsed_work_time_range = parse_user_time_range(work_time_range)
   parsed_sleep_time_range = parse_user_time_range(sleep_time_range)

@@ -78,46 +78,19 @@ def divide_time_ranges_into_fifteen_minute_groups(time_ranges):
     time_ranges_fifteen_minute_groups.append(time_ranges_fifteen_minute_group)
   return time_ranges_fifteen_minute_groups
 
-# helper function
-# parameter specification:
-# time_range_groups: (start_time, end_time)[][]
-def get_rankings_for_each_time_range_in_groups(
-  time_range_groups,
-  work_days,
-  rankings
-):
-  time_range_groups_copy = time_range_groups[:]
-  for i in range(len(time_range_groups_copy)):
-    for j in range(len(time_range_groups_copy[i])):
-      # start_time = time_range_groups_copy[i][j][0]
-      pass
-
-# wrapper function for
-# divide_time_ranges_into_fifteen_minute_groups
-# and
-# get_rankings_for_each_time_range_in_groups
 def get_work_and_personal_time_ranges_rankings(
   work_and_personal_time_ranges,
   work_days,
   rankings
 ):
-  # work_and_personal_time_ranges_fifteen_minutes = { 
-  #   'work': divide_time_ranges_into_fifteen_minute_groups(work_and_personal_time_ranges['work']), 
-  #   'personal': divide_time_ranges_into_fifteen_minute_groups(work_and_personal_time_ranges['personal'])
-  # }
-  work_and_personal_time_ranges_fifteen_minutes = {
-    'work': get_rankings_for_each_time_range_in_groups(
-      time_range_groups=divide_time_ranges_into_fifteen_minute_groups(work_and_personal_time_ranges['work']),
-      work_days=work_days,
-      rankings=rankings
-    ),
-    'personal': get_rankings_for_each_time_range_in_groups(
-      time_range_groups=divide_time_ranges_into_fifteen_minute_groups(work_and_personal_time_ranges['personal']),
-      work_days=work_days,
-      rankings=rankings
-    )
+  work_and_personal_time_ranges_fifteen_minute_groups = {
+    'work': divide_time_ranges_into_fifteen_minute_groups(work_and_personal_time_ranges['work']),
+    'personal': divide_time_ranges_into_fifteen_minute_groups(work_and_personal_time_ranges['personal']), 
   }
-  return work_and_personal_time_ranges_fifteen_minutes
+
+  for work_time_ranges_group in work_and_personal_time_ranges_fifteen_minute_groups['work']:
+    for work_time_range in work_time_ranges_group:
+      pass
 
 def get_tasks_with_highest_relative_priority(id):
   from models import User
@@ -130,9 +103,9 @@ def get_tasks_with_highest_relative_priority(id):
   # print('work_and_personal_time_ranges:')
   # pprint(work_and_personal_time_ranges)
   
-  work_days = user.work_days[:]
+  work_days = user.get_work_days()
   rankings = user.get_rankings()
-  tasks = user.tasks[:]
+  tasks = user.get_tasks()
   
   work_and_personal_tasks = seperate_work_and_personal_tasks(tasks)
   # DEBUG
