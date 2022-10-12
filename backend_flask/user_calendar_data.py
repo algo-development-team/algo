@@ -1,3 +1,7 @@
+# FUTURE CHANGES
+# get_user_events_time_range should have an additional field that takes in which calendars' tasks are fetched
+# only_primary field in get_user_events_time_range can be removed in the future
+
 from models import User
 from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
@@ -120,6 +124,19 @@ def get_user_events_time_range(id, time_min, time_max, only_primary=False):
 
   return events_time_range_remove_buffer
 
+# round down in fifteen minutes for datetime.datetime object
+def start_time_round(dt): 
+  start_time_round_timedelta = timedelta(minutes=(dt.minute % 15))
+  return dt - start_time_round_timedelta
+
+# round up in fifteen minutes for datetime.datetime object
+def end_time_round(dt): 
+  end_time_round_timedelta_val = 15 - (dt.minute % 15)
+  if end_time_round_timedelta_val == 15:
+    end_time_round_timedelta_val = 0
+  end_time_round_timedelta = timedelta(minutes=end_time_round_timedelta_val)
+  return dt + end_time_round_timedelta
+
 # parameter specification:
 # time_ranges: [(start_time, end_time), (start_time, end_time), ...]
 # start_time: datetime.datetime(year, month, day, hour, min)
@@ -129,17 +146,6 @@ def get_user_events_time_range(id, time_min, time_max, only_primary=False):
 # start_time: datetime.datetime(year, month, day, hour, min)
 # end_time: datetime.datetime(year, month, day, hour, min)
 def get_dt_fifteen_min_rounded(time_ranges):
-  # round down in fifteen
-  def start_time_round(dt): 
-    start_time_round_timedelta = timedelta(minutes=(dt.minute % 15))
-    return dt - start_time_round_timedelta
-  # round up in fifteen
-  def end_time_round(dt): 
-    end_time_round_timedelta_val = 15 - (dt.minute % 15)
-    if end_time_round_timedelta_val == 15:
-      end_time_round_timedelta_val = 0
-    end_time_round_timedelta = timedelta(minutes=end_time_round_timedelta_val)
-    return dt + end_time_round_timedelta
   time_ranges_rounded = [
     (start_time_round(time_range[0]), 
     end_time_round(time_range[1]))
@@ -151,11 +157,10 @@ def get_dt_fifteen_min_rounded(time_ranges):
 # time_min: datetime.datetime(year, month, day, hour, min)
 # time_max: datetime.datetime(year, month, day, hour, min)
 # return value specification:
-# [(start_time, end_time, duration), (start_time, end_time, duration), ...]
+# [(start_time, end_time), (start_time, end_time), ...]
 # start_time: datetime.datetime(year, month, day, hour, min)
 # end_time: datetime.datetime(year, month, day, hour, min)
-# duration: int
-def get_empty_time_ranges_and_durations(id, time_min, time_max):
+def get_empty_time_ranges(id, time_min, time_max):
   time_ranges = get_dt_fifteen_min_rounded(get_user_events_time_range(id, time_min, time_max))
   time_ranges_detupled = [time_min]
   for time_range in time_ranges:
@@ -163,13 +168,13 @@ def get_empty_time_ranges_and_durations(id, time_min, time_max):
     time_ranges_detupled.append(time_range[1])
   time_ranges_detupled.append(time_max)
 
-  empty_time_ranges_durations = []
+  empty_time_ranges = []
   for i in range(0, len(time_ranges_detupled), 2):
     diff = int((time_ranges_detupled[i+1] - time_ranges_detupled[i]).total_seconds() / 60)
     if diff > 0:
-      empty_time_ranges_durations.append((time_ranges_detupled[i], time_ranges_detupled[i+1], diff))
+      empty_time_ranges.append((time_ranges_detupled[i], time_ranges_detupled[i+1]))
 
-  return empty_time_ranges_durations
+  return empty_time_ranges
 
 # helper function
 def get_period_limit_type(period_limits_idx):
@@ -234,12 +239,9 @@ def get_period_type(type_before, type_after):
     return { 'type': 'sleep' }
 
 # parameter specification:
-# time_ranges: [(start_time, end_time, duration), (start_time, end_time, duration), ...]
-# or
 # time_ranges: [(start_time, end_time), (start_time, end_time), ...]
 # start_time: datetime.datetime(year, month, day, hour, min)
 # end_time: datetime.datetime(year, month, day, hour, min)
-# duration: int
 # work_time_range: 'Hour:MM-Hour:MM', where Hour is 'H' or 'HH'
 # sleep_time_range: 'Hour:MM-Hour:MM', where Hour is 'H' or 'HH'
 # return value specification:
@@ -247,9 +249,6 @@ def get_period_type(type_before, type_after):
 # start_time: datetime.datetime(year, month, day, hour, min)
 # end_time: datetime.datetime(year, month, day, hour, min)
 def separate_periods_time_ranges(time_ranges, work_time_range, sleep_time_range):
-  # remove durations if time_ranges contains them
-  if len(time_ranges[0]) == 3:
-    time_ranges = [(time_range[0], time_range[1]) for time_range in time_ranges]
   
   parsed_work_time_range = parse_user_time_range(work_time_range)
   parsed_sleep_time_range = parse_user_time_range(sleep_time_range)
@@ -280,12 +279,13 @@ def separate_periods_time_ranges(time_ranges, work_time_range, sleep_time_range)
             work_and_personal_time_ranges[period_type['type']].append((start_time, period_ranges[i + 1]['time']))
             # DEBUG
             # pprint((start_time, period_ranges[i + 1]['time'], 'not break'))
-        print('start_time reset')
+        # DEBUG
+        # print('start_time reset')
         start_time = period_ranges[i + 1]['time']
     
   return work_and_personal_time_ranges
 
-# wrapper function for get_empty_time_ranges_and_durations and separate_periods_time_ranges
+# wrapper function for get_empty_time_ranges and separate_periods_time_ranges
 # parameter specification:
 # id: user_id that has valid refresh_token (non-test user)
 # time_min: datetime.datetime(year, month, day, hour, min)
@@ -297,6 +297,6 @@ def separate_periods_time_ranges(time_ranges, work_time_range, sleep_time_range)
 # start_time: datetime.datetime(year, month, day, hour, min)
 # end_time: datetime.datetime(year, month, day, hour, min)
 def get_work_and_personal_time_ranges(id, time_min, time_max, work_time_range, sleep_time_range):
-  empty_time_ranges_and_durations = get_empty_time_ranges_and_durations(id, time_min, time_max)
-  work_and_personal_time_ranges = separate_periods_time_ranges(empty_time_ranges_and_durations, work_time_range, sleep_time_range)
+  empty_time_ranges = get_empty_time_ranges(id, time_min, time_max)
+  work_and_personal_time_ranges = separate_periods_time_ranges(empty_time_ranges, work_time_range, sleep_time_range)
   return work_and_personal_time_ranges
