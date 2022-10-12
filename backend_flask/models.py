@@ -103,6 +103,19 @@ class User(db.Model):
       'tasks': [task.serialize() for task in self.tasks]
     }
 
+  def get_rankings(self):
+    return {
+      'urgent_rankings_ww': self.urgent_rankings_ww[:],
+      'shallow_rankings_ww': self.shallow_rankings_ww[:],
+      'deep_rankings_ww': self.deep_rankings_ww[:],
+      'urgent_rankings_pw': self.urgent_rankings_pw[:],
+      'shallow_rankings_pw': self.shallow_rankings_pw[:],
+      'deep_rankings_pw': self.deep_rankings_pw[:],
+      'urgent_rankings_pnw': self.urgent_rankings_pnw[:],
+      'shallow_rankings_pnw': self.shallow_rankings_pnw[:],
+      'deep_rankings_pnw': self.deep_rankings_pnw[:]
+    }
+
 class Workspace(db.Model):
   id = db.Column(db.Integer, primary_key=True)
   name = db.Column(db.String(10000), nullable=False)

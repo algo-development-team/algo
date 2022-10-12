@@ -58,20 +58,66 @@ def seperate_work_and_personal_tasks(tasks):
       work_and_personal_tasks['personal'].append(task)
   return work_and_personal_tasks
 
-def get_relatve_priority_rankings(
+# parameter specification:
+# time_ranges: (start_time, end_time)[]
+# start_time: datetime.datetime(year, month, day, hour, min)
+# end_time: datetime.datetime(year, month, day, hour, min)
+# condition: minute of start_time and end_time are already rounded to fifteen minutes
+# return value specification:
+# (start_time, end_time)[][]
+def divide_time_ranges_into_fifteen_minute_groups(time_ranges):
+  time_ranges_copy = time_ranges[:]
+  time_ranges_fifteen_minute_groups = []
+  for time_range in time_ranges_copy:
+    time_ranges_fifteen_minute_group = []
+    start_time = time_range[0]
+    end_time = time_range[1]
+    while (start_time < end_time):
+      time_ranges_fifteen_minute_group.append((start_time, start_time + timedelta(seconds=900)))
+      start_time += timedelta(seconds=900)
+    time_ranges_fifteen_minute_groups.append(time_ranges_fifteen_minute_group)
+  return time_ranges_fifteen_minute_groups
+
+# helper function
+# parameter specification:
+# time_range_groups: (start_time, end_time)[][]
+def get_rankings_for_each_time_range_in_groups(
+  time_range_groups,
+  work_days,
+  rankings
+):
+  time_range_groups_copy = time_range_groups[:]
+  for i in range(len(time_range_groups_copy)):
+    for j in range(len(time_range_groups_copy[i])):
+      # start_time = time_range_groups_copy[i][j][0]
+      pass
+
+# wrapper function for
+# divide_time_ranges_into_fifteen_minute_groups
+# and
+# get_rankings_for_each_time_range_in_groups
+def get_work_and_personal_time_ranges_rankings(
   work_and_personal_time_ranges,
   work_days,
-  urgent_rankings_ww,
-  shallow_rankings_ww,
-  deep_rankings_ww,
-  urgent_rankings_pw,
-  shallow_rankings_pw,
-  deep_rankings_pw,
-  urgent_rankings_pnw,
-  shallow_rankings_pnw,
-  deep_rankings_pnw
+  rankings
 ):
-  pass
+  # work_and_personal_time_ranges_fifteen_minutes = { 
+  #   'work': divide_time_ranges_into_fifteen_minute_groups(work_and_personal_time_ranges['work']), 
+  #   'personal': divide_time_ranges_into_fifteen_minute_groups(work_and_personal_time_ranges['personal'])
+  # }
+  work_and_personal_time_ranges_fifteen_minutes = {
+    'work': get_rankings_for_each_time_range_in_groups(
+      time_range_groups=divide_time_ranges_into_fifteen_minute_groups(work_and_personal_time_ranges['work']),
+      work_days=work_days,
+      rankings=rankings
+    ),
+    'personal': get_rankings_for_each_time_range_in_groups(
+      time_range_groups=divide_time_ranges_into_fifteen_minute_groups(work_and_personal_time_ranges['personal']),
+      work_days=work_days,
+      rankings=rankings
+    )
+  }
+  return work_and_personal_time_ranges_fifteen_minutes
 
 def get_tasks_with_highest_relative_priority(id):
   from models import User
@@ -81,50 +127,22 @@ def get_tasks_with_highest_relative_priority(id):
   # DEBUG (work_and_personal_time_ranges_copy used for debugging only)
   # work_and_personal_time_ranges_copy = deepcopy(work_and_personal_time_ranges)
   # DEBUG
-  print('work_and_personal_time_ranges:')
-  pprint(work_and_personal_time_ranges)
+  # print('work_and_personal_time_ranges:')
+  # pprint(work_and_personal_time_ranges)
   
   work_days = user.work_days[:]
-  urgent_rankings_ww = user.urgent_rankings_ww[:]
-  deep_rankings_ww = user.deep_rankings_ww[:]
-  shallow_rankings_ww = user.shallow_rankings_ww[:]
-  urgent_rankings_pw = user.urgent_rankings_pw[:]
-  deep_rankings_pw = user.deep_rankings_pw[:]
-  shallow_rankings_pw = user.shallow_rankings_pw[:]
-  urgent_rankings_pnw = user.urgent_rankings_pnw[:]
-  deep_rankings_pnw = user.deep_rankings_pnw[:]
-  shallow_rankings_pnw = user.shallow_rankings_pnw[:]
+  rankings = user.get_rankings()
   tasks = user.tasks[:]
   
   work_and_personal_tasks = seperate_work_and_personal_tasks(tasks)
   # DEBUG
-  print('work_and_personal_tasks:')
-  pprint(work_and_personal_tasks)
+  # print('work_and_personal_tasks:')
+  # pprint(work_and_personal_tasks)
 
-  # DEBUG
-  print('rankings:')
-  print(urgent_rankings_ww)
-  print(deep_rankings_ww)
-  print(shallow_rankings_ww)
-  print(urgent_rankings_pw)
-  print(deep_rankings_pw)
-  print(shallow_rankings_pw)
-  print(urgent_rankings_pnw)
-  print(deep_rankings_pnw)
-  print(shallow_rankings_pnw)
-
-  relative_priority_rankings = get_relatve_priority_rankings(
+  work_and_personal_time_ranges_rankings = get_work_and_personal_time_ranges_rankings(
     work_and_personal_time_ranges=work_and_personal_time_ranges,
     work_days=work_days,
-    urgent_rankings_ww=urgent_rankings_ww,
-    shallow_rankings_ww=shallow_rankings_ww,
-    deep_rankings_ww=deep_rankings_ww,
-    urgent_rankings_pw=urgent_rankings_pw,
-    shallow_rankings_pw=shallow_rankings_pw,
-    deep_rankings_pw=deep_rankings_pw,
-    urgent_rankings_pnw=urgent_rankings_pnw,
-    shallow_rankings_pnw=shallow_rankings_pnw,
-    deep_rankings_pnw=deep_rankings_pnw,
+    rankings=rankings
   )
 
 # TEST

@@ -12,23 +12,15 @@ bp = Blueprint('/api/user', __name__, url_prefix='/api/user')
 # preferred type -> 2
 # updated 1: [60, 100, 1]
 # updated 2: [45, 100, 60]
-def get_rankings(
-  urgent_rankings_ww,
-  deep_rankings_ww,
-  shallow_rankings_ww,
-  urgent_rankings_pw,
-  deep_rankings_pw,
-  shallow_rankings_pw,
-  urgent_rankings_pnw,
-  deep_rankings_pnw,
-  shallow_rankings_pnw,
+def get_rankings_3d_matrix(
+  rankings,
   rankings_ww_user_specified,
   rankings_pw_user_specified,
   rankings_pnw_user_specified
   ):
-  rankings_3d_matrix = [[urgent_rankings_ww, deep_rankings_ww, shallow_rankings_ww], 
-                        [urgent_rankings_pw, deep_rankings_pw, shallow_rankings_pw], 
-                        [urgent_rankings_pnw, deep_rankings_pnw, shallow_rankings_pnw]]
+  rankings_3d_matrix = [[rankings['urgent_rankings_ww'], rankings['deep_rankings_ww'], rankings['shallow_rankings_ww']], 
+                        [rankings['urgent_rankings_pw'], rankings['deep_rankings_pw'], rankings['shallow_rankings_pw']], 
+                        [rankings['urgent_rankings_pnw'], rankings['deep_rankings_pnw'], rankings['shallow_rankings_pnw']]]
   rankings_matrix_user_specified = [rankings_ww_user_specified,
                                     rankings_pw_user_specified,
                                     rankings_pnw_user_specified]
@@ -111,16 +103,10 @@ def update_rankings_user():
   else:  
     # passing all the user rankings by value
     # passing by reference will prevent the fields being updated later on
-    rankings_3d_matrix = get_rankings(
-      urgent_rankings_ww=user.urgent_rankings_ww[:],
-      deep_rankings_ww=user.deep_rankings_ww[:],
-      shallow_rankings_ww=user.shallow_rankings_ww[:],
-      urgent_rankings_pw=user.urgent_rankings_pw[:],
-      deep_rankings_pw=user.deep_rankings_pw[:],
-      shallow_rankings_pw=user.shallow_rankings_pw[:],
-      urgent_rankings_pnw=user.urgent_rankings_pnw[:],
-      deep_rankings_pnw=user.deep_rankings_pnw[:],
-      shallow_rankings_pnw=user.shallow_rankings_pnw[:],
+    rankings = user.get_rankings()
+
+    rankings_3d_matrix = get_rankings_3d_matrix(
+      rankings=rankings,
       rankings_ww_user_specified=data['rankings_ww_user_specified'],
       rankings_pw_user_specified=data['rankings_pw_user_specified'],
       rankings_pnw_user_specified=data['rankings_pnw_user_specified']
