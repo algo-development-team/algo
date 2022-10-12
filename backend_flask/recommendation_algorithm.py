@@ -15,11 +15,6 @@ def get_one_full_day(sleep_time_range):
   sleep_start = datetime(now.year, now.month, now.day, parsed_sleep_time_range['start']['hour'], parsed_sleep_time_range['start']['minute'])
   if sleep_start > sleep_end:
     sleep_start = sleep_start - timedelta(days=1)
-  # convert_minute_only = lambda hour, minute : hour * 60 + minute
-  # now_minute = convert_minute_only(now.hour, now.minute)
-  # sleep_end_minute = convert_minute_only(sleep_end.hour, sleep_end.minute)
-  # if now < sleep_end:
-  #   sleep_end -= timedelta(days=1)
   if sleep_start <= now < sleep_end:
     print('between sleep_start and sleep_end')
     return (sleep_end, sleep_start + timedelta(days=1))
