@@ -23,7 +23,7 @@ else:
   empty_time_ranges_and_durations = get_empty_time_ranges_and_durations(user.id, time_min, time_max)
   work_time_range = '9:00-17:00'
   sleep_time_range = '23:00-7:00'
-  work_time_ranges = separate_periods_time_ranges(empty_time_ranges_and_durations, work_time_range, sleep_time_range)
+  work_and_personal_time_ranges = separate_periods_time_ranges(empty_time_ranges_and_durations, work_time_range, sleep_time_range)
 
   sep()
   print('Tested Functions:')
@@ -63,5 +63,5 @@ else:
   sep()
   sep()
   print('Separated Periods Time Ranges:')
-  pprint(work_time_ranges)
+  pprint(work_and_personal_time_ranges)
   sep()

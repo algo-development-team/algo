@@ -14,7 +14,7 @@ TOKEN_URI = 'https://oauth2.googleapis.com/token'
 # parameter specification:
 # user_time_range: 'Hour:MM-Hour:MM', where Hour is 'H' or 'HH'
 # return value specification:
-# { 'start': { 'hour': int, 'min': int }, 'end': { 'hour': int, 'min': int } }
+# { 'start': { 'hour': int, 'minute': int }, 'end': { 'hour': int, 'minute': int } }
 def parse_user_time_range(user_time_range):
   time_limit_hour_and_minute_str = [[int(time_limit_part) for time_limit_part in time_limit.split(':')] for time_limit in user_time_range.split('-')]
   return { 
@@ -183,12 +183,14 @@ def get_period_limit_type(period_limits_idx):
     return 'sleep_start'
 
 # helper function
-# parameter specification
+# parameter specification:
 # time_range: (start_time, end_time)
 # start_time: datetime.datetime(year, month, day, hour, min)
 # end_time: datetime.datetime(year, month, day, hour, min)
 # work_time_range: { 'start': { 'hour': int, 'min': int }, 'end': { 'hour': int, 'min': int } }
 # sleep_time_range: { 'start': { 'hour': int, 'min': int }, 'end': { 'hour': int, 'min': int } }
+# return value specification:
+# [{ 'type': str, 'time': datetime.datetime(year, month, day, hour, min) }, ...]
 def get_period_ranges(time_range, work_time_range, sleep_time_range):
   convert_minute_only = lambda hour, minute : hour * 60 + minute
   (start_time, end_time) = time_range
@@ -240,6 +242,10 @@ def get_period_type(type_before, type_after):
 # duration: int
 # work_time_range: 'Hour:MM-Hour:MM', where Hour is 'H' or 'HH'
 # sleep_time_range: 'Hour:MM-Hour:MM', where Hour is 'H' or 'HH'
+# return value specification:
+# { 'work': (start_time, end_time)[], 'personal': (start_time, end_time)[] }
+# start_time: datetime.datetime(year, month, day, hour, min)
+# end_time: datetime.datetime(year, month, day, hour, min)
 def separate_periods_time_ranges(time_ranges, work_time_range, sleep_time_range):
   # remove durations if time_ranges contains them
   if len(time_ranges[0]) == 3:
@@ -277,4 +283,20 @@ def separate_periods_time_ranges(time_ranges, work_time_range, sleep_time_range)
         print('start_time reset')
         start_time = period_ranges[i + 1]['time']
     
+  return work_and_personal_time_ranges
+
+# wrapper function for get_empty_time_ranges_and_durations and separate_periods_time_ranges
+# parameter specification:
+# id: user_id that has valid refresh_token (non-test user)
+# time_min: datetime.datetime(year, month, day, hour, min)
+# time_max: datetime.datetime(year, month, day, hour, min)
+# work_time_range: 'Hour:MM-Hour:MM', where Hour is 'H' or 'HH'
+# sleep_time_range: 'Hour:MM-Hour:MM', where Hour is 'H' or 'HH'
+# return value specification:
+# { 'work': (start_time, end_time)[], 'personal': (start_time, end_time)[] }
+# start_time: datetime.datetime(year, month, day, hour, min)
+# end_time: datetime.datetime(year, month, day, hour, min)
+def get_work_and_personal_time_ranges(id, time_min, time_max, work_time_range, sleep_time_range):
+  empty_time_ranges_and_durations = get_empty_time_ranges_and_durations(id, time_min, time_max)
+  work_and_personal_time_ranges = separate_periods_time_ranges(empty_time_ranges_and_durations, work_time_range, sleep_time_range)
   return work_and_personal_time_ranges
