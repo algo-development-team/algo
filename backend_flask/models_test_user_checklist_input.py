@@ -1,6 +1,8 @@
 from app import db
 from models import User
 
-user1 = User.query.get(1)
-user1.checklist = [1, 2, 3]
+print('Enter the user\'s email address:')
+email = input()
+user = User.query.filter_by(email=email).first()
+user.checklist = [1, 2, 3]
 db.session.commit()

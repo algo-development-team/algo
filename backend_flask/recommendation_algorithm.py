@@ -88,15 +88,74 @@ def get_work_and_personal_time_ranges_rankings(
     'personal': divide_time_ranges_into_fifteen_minute_groups(work_and_personal_time_ranges['personal']), 
   }
 
+  # work_and_personal_time_ranges_rankings['work' or 'personal'] data structure:
+  # { 'time_range': (start_time, end_time), 'rankings': (urgent, deep, shallow) }[][]
+  work_and_personal_time_ranges_rankings = { 'work': [], 'personal': [] }
+
   for work_time_ranges_group in work_and_personal_time_ranges_fifteen_minute_groups['work']:
+    time_ranges_rankings_group = []
     for work_time_range in work_time_ranges_group:
-      pass
+      start_time = work_time_range[0]
+      hour = start_time.hour
+      is_work_day = work_days[int(start_time.date().strftime('%w'))]
+      # ww (work-working-day)
+      if is_work_day:
+        time_ranges_rankings_group.append({
+          'time_range': work_time_range,
+          'rankings': (
+            rankings['urgent_rankings_ww'][hour],
+            rankings['deep_rankings_ww'][hour],
+            rankings['shallow_rankings_ww'][hour],
+          )
+        })
+      # pnw (personal-non-working-day)
+      else:
+        time_ranges_rankings_group.append({
+          'time_range': work_time_range,
+          'rankings': (
+            rankings['urgent_rankings_pnw'][hour],
+            rankings['deep_rankings_pnw'][hour],
+            rankings['shallow_rankings_pnw'][hour],
+          )
+        })
+    work_and_personal_time_ranges_rankings['work'].append(time_ranges_rankings_group)
+
+  for personal_time_ranges_group in work_and_personal_time_ranges_fifteen_minute_groups['personal']:
+    time_ranges_rankings_group = []
+    for personal_time_range in personal_time_ranges_group:
+      start_time = personal_time_range[0]
+      hour = start_time.hour
+      is_work_day = work_days[int(start_time.date().strftime('%w'))]
+      # pw (personal-working-day)
+      if is_work_day:
+        time_ranges_rankings_group.append({
+          'time_range': personal_time_range,
+          'rankings': (
+            rankings['urgent_rankings_pw'][hour],
+            rankings['deep_rankings_pw'][hour],
+            rankings['shallow_rankings_pw'][hour],
+          )
+        })
+      # pnw (personal-non-working-day)
+      else:
+        time_ranges_rankings_group.append({
+          'time_range': personal_time_range,
+          'rankings': (
+            rankings['urgent_rankings_pnw'][hour],
+            rankings['deep_rankings_pnw'][hour],
+            rankings['shallow_rankings_pnw'][hour],
+          )
+        })
+    work_and_personal_time_ranges_rankings['personal'].append(time_ranges_rankings_group)
+      
+  return work_and_personal_time_ranges_rankings
 
 def get_tasks_with_highest_relative_priority(id):
   from models import User
   user = User.query.get(id)
   (sleep_end_today_or_now, sleep_start_tomorrow) = get_one_full_day(user.sleep_time_range)
   work_and_personal_time_ranges = get_work_and_personal_time_ranges(id, sleep_end_today_or_now, sleep_start_tomorrow, user.work_time_range, user.sleep_time_range)
+  
   # DEBUG (work_and_personal_time_ranges_copy used for debugging only)
   # work_and_personal_time_ranges_copy = deepcopy(work_and_personal_time_ranges)
   # DEBUG
@@ -108,6 +167,7 @@ def get_tasks_with_highest_relative_priority(id):
   tasks = user.get_tasks()
   
   work_and_personal_tasks = seperate_work_and_personal_tasks(tasks)
+  
   # DEBUG
   # print('work_and_personal_tasks:')
   # pprint(work_and_personal_tasks)
@@ -117,6 +177,10 @@ def get_tasks_with_highest_relative_priority(id):
     work_days=work_days,
     rankings=rankings
   )
+
+  # DEBUG
+  # print('work_and_personal_time_ranges_rankings')
+  # pprint(work_and_personal_time_ranges_rankings)
 
 # TEST
 def test():
