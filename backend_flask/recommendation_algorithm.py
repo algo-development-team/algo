@@ -184,8 +184,8 @@ def get_tasks_with_highest_relative_priority(id):
   work_and_personal_tasks = seperate_work_and_personal_tasks(tasks)
   
   # DEBUG
-  print('work_and_personal_tasks:')
-  pprint(work_and_personal_tasks)
+  # print('work_and_personal_tasks:')
+  # pprint(work_and_personal_tasks)
   
   # work_and_personal_time_ranges_rankings['work' or 'personal'] data structure:
   # { 'time_range': (start_time, end_time), 'rankings': (urgent, deep, shallow) }[][]
@@ -217,8 +217,9 @@ def get_tasks_with_highest_relative_priority(id):
     'personal': get_tasks_transformed(work_and_personal_tasks['personal'])
   }
 
-  print('work_and_personal_tasks_transformed:')
-  pprint(work_and_personal_tasks_transformed)
+  # DEBUG
+  # print('work_and_personal_tasks_transformed:')
+  # pprint(work_and_personal_tasks_transformed)
 
 # TEST
 def test():
