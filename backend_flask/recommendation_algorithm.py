@@ -219,6 +219,12 @@ def get_task_type_index(priority, day_diff, time_length):
     else:
       return 1
 
+def multiply_parameters_and_values(parameters, values, keys):
+  total = 0
+  for key in keys:
+    total += parameters[key] * values[key]
+  return total
+
 def get_tasks_with_highest_relative_priority(id):
   from models import User
   user = User.query.get(id)
@@ -249,8 +255,8 @@ def get_tasks_with_highest_relative_priority(id):
   )
 
   # DEBUG
-  print('work_and_personal_time_ranges_rankings')
-  pprint(work_and_personal_time_ranges_rankings)
+  # print('work_and_personal_time_ranges_rankings')
+  # pprint(work_and_personal_time_ranges_rankings)
 
   # constant parameters for recommendation algorithm
   parameters = {
@@ -271,8 +277,8 @@ def get_tasks_with_highest_relative_priority(id):
   }
 
   # DEBUG
-  print('work_and_personal_tasks_transformed:')
-  pprint(work_and_personal_tasks_transformed)
+  # print('work_and_personal_tasks_transformed:')
+  # pprint(work_and_personal_tasks_transformed)
 
   # CURRENTLY TESTING HERE
   # workspace1.workspace_type SWITCHED TO WorkspaceType.PERSONAL TO ACCOMODATE FOR TESTING TIME
@@ -327,8 +333,13 @@ def get_tasks_with_highest_relative_priority(id):
           'e': (8 - time_length_diff) / 8,
         }
 
-        # DEBUG
-        pprint(values_transformed)
+        task_relative_priority = multiply_parameters_and_values(parameters, values_transformed, ['a', 'b', 'c', 'd', 'e'])
+        tasks_relative_priority.append(task_relative_priority)
+
+      # DEBUG
+      print('tasks_relative_priority:')
+      pprint(tasks_relative_priority)
+
     stop = True
 
 # TEST
