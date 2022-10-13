@@ -328,7 +328,6 @@ def get_tasks_with_highest_relative_priority(id):
           'a': task['priority'] / 3,
           'b': (9 - task['time_length']) / 9,
           'c': (15 - day_diff) / 15,
-          # CONTINUE HERE
           'd': average_type_ranking / 100,
           'e': (8 - time_length_diff) / 8,
         }
