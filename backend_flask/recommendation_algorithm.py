@@ -16,17 +16,17 @@ def get_priority_value(PRIORITY):
 # helper function
 def get_time_length_value(TIME_LENGTH):
   if TIME_LENGTH == TimeLength.FIFTEEN_MIN:
-    return 15
+    return 1
   elif TIME_LENGTH == TimeLength.THIRTY_MIN:
-    return 30
+    return 2
   elif TIME_LENGTH == TimeLength.ONE_HOUR:
-    return 60
+    return 4
   elif TIME_LENGTH == TimeLength.TWO_HOURS:
-    return 120
+    return 8
   elif TIME_LENGTH == TimeLength.FOUR_HOURS:
-    return 240
+    return 16
   elif TIME_LENGTH == TimeLength.EIGHT_HOURS:
-    return 480
+    return 32
 
 # helper function
 # parameter specification:
@@ -150,14 +150,29 @@ def get_work_and_personal_time_ranges_rankings(
       
   return work_and_personal_time_ranges_rankings
 
+def get_tasks_transformed(tasks):
+  tasks_transformed = []
+  for task in tasks:
+    priority_value = get_priority_value(task.priority)
+    total_time_length = get_time_length_value(task.time_length)
+    num_sections = total_time_length // 8 if total_time_length % 8 == 0 else (total_time_length // 8) + 1
+    for i in range(num_sections):
+      task_transformed = {
+        'id': task.id,
+        'section': i + 1,
+        'priority': priority_value,
+        'deadline': task.deadline,
+        'time_length': total_time_length - (i * 8) if total_time_length - (i * 8) < 8 else 8,
+      }
+      tasks_transformed.append(task_transformed)
+  return tasks_transformed
+
 def get_tasks_with_highest_relative_priority(id):
   from models import User
   user = User.query.get(id)
   (sleep_end_today_or_now, sleep_start_tomorrow) = get_one_full_day(user.sleep_time_range)
   work_and_personal_time_ranges = get_work_and_personal_time_ranges(id, sleep_end_today_or_now, sleep_start_tomorrow, user.work_time_range, user.sleep_time_range)
   
-  # DEBUG (work_and_personal_time_ranges_copy used for debugging only)
-  # work_and_personal_time_ranges_copy = deepcopy(work_and_personal_time_ranges)
   # DEBUG
   # print('work_and_personal_time_ranges:')
   # pprint(work_and_personal_time_ranges)
@@ -169,9 +184,11 @@ def get_tasks_with_highest_relative_priority(id):
   work_and_personal_tasks = seperate_work_and_personal_tasks(tasks)
   
   # DEBUG
-  # print('work_and_personal_tasks:')
-  # pprint(work_and_personal_tasks)
-
+  print('work_and_personal_tasks:')
+  pprint(work_and_personal_tasks)
+  
+  # work_and_personal_time_ranges_rankings['work' or 'personal'] data structure:
+  # { 'time_range': (start_time, end_time), 'rankings': (urgent, deep, shallow) }[][]
   work_and_personal_time_ranges_rankings = get_work_and_personal_time_ranges_rankings(
     work_and_personal_time_ranges=work_and_personal_time_ranges,
     work_days=work_days,
@@ -181,6 +198,27 @@ def get_tasks_with_highest_relative_priority(id):
   # DEBUG
   # print('work_and_personal_time_ranges_rankings')
   # pprint(work_and_personal_time_ranges_rankings)
+
+  # constant parameters for recommendation algorithm
+  parameters = {
+    'a': 3,
+    'b': 1,
+    'c': 3,
+    'd': 2,
+    'e': 2
+  }
+
+  # DEBUG (work_and_personal_time_ranges_copy used for debugging only)
+  # work_and_personal_tasks_copy = deepcopy(work_and_personal_tasks)
+  # work_and_personal_time_ranges_copy = deepcopy(work_and_personal_time_ranges)
+
+  work_and_personal_tasks_transformed = {
+    'work': get_tasks_transformed(work_and_personal_tasks['work']), 
+    'personal': get_tasks_transformed(work_and_personal_tasks['personal'])
+  }
+
+  print('work_and_personal_tasks_transformed:')
+  pprint(work_and_personal_tasks_transformed)
 
 # TEST
 def test():
