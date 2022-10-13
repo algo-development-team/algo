@@ -1,6 +1,6 @@
 # FUTURE CHANGES
 # get_user_events_time_range should have an additional field that takes in which calendars' tasks are fetched
-# only_primary field in get_user_events_time_range can be removed in the future
+# only_primary field in get_user_events_time_range should be removed in the future
 
 from models import User
 from googleapiclient.discovery import build
@@ -158,8 +158,8 @@ def get_dt_fifteen_min_rounded(time_ranges):
 # time_max: datetime.datetime(year, month, day, hour, min)
 # return value specification:
 # [(start_time, end_time), (start_time, end_time), ...]
-# start_time: datetime.datetime(year, month, day, hour, min)
-# end_time: datetime.datetime(year, month, day, hour, min)
+# start_time: datetime.datetime(year, month, day, hour, min), min rounded to 15 min
+# end_time: datetime.datetime(year, month, day, hour, min), min rounded to 15 min
 def get_empty_time_ranges(id, time_min, time_max):
   time_ranges = get_dt_fifteen_min_rounded(get_user_events_time_range(id, time_min, time_max))
   time_ranges_detupled = [time_min]
@@ -302,8 +302,8 @@ def separate_periods_time_ranges(id, time_ranges, work_time_range, sleep_time_ra
 # sleep_time_range: 'Hour:MM-Hour:MM', where Hour is 'H' or 'HH'
 # return value specification:
 # { 'work': (start_time, end_time)[], 'personal': (start_time, end_time)[] }
-# start_time: datetime.datetime(year, month, day, hour, min)
-# end_time: datetime.datetime(year, month, day, hour, min)
+# start_time: datetime.datetime(year, month, day, hour, min), min rounded to 15 min
+# end_time: datetime.datetime(year, month, day, hour, min), min rounded to 15 min
 def get_work_and_personal_time_ranges(id, time_min, time_max, work_time_range, sleep_time_range):
   empty_time_ranges = get_empty_time_ranges(id, time_min, time_max)
   work_and_personal_time_ranges = separate_periods_time_ranges(id, empty_time_ranges, work_time_range, sleep_time_range)

@@ -78,6 +78,10 @@ def divide_time_ranges_into_fifteen_minute_groups(time_ranges):
     time_ranges_fifteen_minute_groups.append(time_ranges_fifteen_minute_group)
   return time_ranges_fifteen_minute_groups
 
+# parameter specification:
+# work_and_personal_time_ranges: { 'work': (start_time, end_time)[], 'personal': (start_time, end_time)[] }
+# work_days: bool[7]
+# rankings: int[9][24] (rankings from User.get_rankings())
 def get_work_and_personal_time_ranges_rankings(
   work_and_personal_time_ranges,
   work_days,
@@ -150,6 +154,11 @@ def get_work_and_personal_time_ranges_rankings(
       
   return work_and_personal_time_ranges_rankings
 
+# helper function
+# parameter specification:
+# tasks: Task[]
+# return value specification:
+# { 'id': int, 'section': int (1-4), 'priority': int (1-3), 'deadline': datetime.datetime(year, month, day, hour, min), 'time_length': int (1, 2, 4, 8) }[]
 def get_tasks_transformed(tasks):
   tasks_transformed = []
   for task in tasks:
@@ -166,6 +175,49 @@ def get_tasks_transformed(tasks):
       }
       tasks_transformed.append(task_transformed)
   return tasks_transformed
+
+# helper function
+# used only for testing
+# parameter specification:
+# task_type_index: int (1-3)
+# return value specification:
+# str ('urgent' or 'deep' or 'shallow')
+def get_task_type(task_type_index):
+  if task_type_index == 0:
+    return 'urgent'
+  elif task_type_index == 1:
+    return 'deep'
+  elif task_type_index == 2:
+    return 'shallow'
+
+# helper function
+# parameter specification:
+# priority: int (1-3)
+# day_diff: int (0-14)
+# time_length: int (1, 2, 4, 8)
+# return value specification:
+# int (1-3)
+def get_task_type_index(priority, day_diff, time_length):
+  
+  # shallow by-default
+  if priority == 1:
+    return 2
+  # deep or shallow
+  elif priority == 2:
+    # shallow (15 min or 30 min)
+    if time_length <= 2:
+      return 2
+    # deep (1 hour or longer)
+    else:
+      return 1
+  # urgent or deep by-default
+  elif priority == 3:
+    # urgent (day-before-yesterday, yesterday, today, tomorrow, day-after-tomorrow)
+    if day_diff <= 2:
+      return 0
+    # deep 
+    else:
+      return 1
 
 def get_tasks_with_highest_relative_priority(id):
   from models import User
@@ -189,6 +241,7 @@ def get_tasks_with_highest_relative_priority(id):
   
   # work_and_personal_time_ranges_rankings['work' or 'personal'] data structure:
   # { 'time_range': (start_time, end_time), 'rankings': (urgent, deep, shallow) }[][]
+  # urgent, deep, shallow: 1-100
   work_and_personal_time_ranges_rankings = get_work_and_personal_time_ranges_rankings(
     work_and_personal_time_ranges=work_and_personal_time_ranges,
     work_days=work_days,
@@ -196,8 +249,8 @@ def get_tasks_with_highest_relative_priority(id):
   )
 
   # DEBUG
-  # print('work_and_personal_time_ranges_rankings')
-  # pprint(work_and_personal_time_ranges_rankings)
+  print('work_and_personal_time_ranges_rankings')
+  pprint(work_and_personal_time_ranges_rankings)
 
   # constant parameters for recommendation algorithm
   parameters = {
@@ -208,7 +261,7 @@ def get_tasks_with_highest_relative_priority(id):
     'e': 2
   }
 
-  # DEBUG (work_and_personal_time_ranges_copy used for debugging only)
+  # DEBUG (copied dictionaries used for debugging only)
   # work_and_personal_tasks_copy = deepcopy(work_and_personal_tasks)
   # work_and_personal_time_ranges_copy = deepcopy(work_and_personal_time_ranges)
 
@@ -218,8 +271,65 @@ def get_tasks_with_highest_relative_priority(id):
   }
 
   # DEBUG
-  # print('work_and_personal_tasks_transformed:')
-  # pprint(work_and_personal_tasks_transformed)
+  print('work_and_personal_tasks_transformed:')
+  pprint(work_and_personal_tasks_transformed)
+
+  # CURRENTLY TESTING HERE
+  # workspace1.workspace_type SWITCHED TO WorkspaceType.PERSONAL TO ACCOMODATE FOR TESTING TIME
+  # RESET 'personal' TO 'work' AFTER TESTING IS COMPLETE
+
+  stop = False
+  while (not stop):
+  # while (
+  #   len(work_and_personal_tasks_transformed['personal']) != 0
+  #   and
+  #   len(work_and_personal_time_ranges_rankings['personal']) != 0
+  # ):
+    # work tasks relative priority
+    # time_ranges_group data structure:
+    # { 'time_range': (start_time, end_time), 'rankings': (urgent, deep, shallow) }[]
+    # urgent, deep, shallow: 1-100
+    for time_ranges_group in work_and_personal_time_ranges_rankings['personal']:
+      tasks_relative_priority = []
+      
+      # DEBUG
+      print('time_ranges_group round:')
+      
+      # task data structure:
+      # { 'id': int, 'section': int (1-4), 'priority': int (1-3), 'deadline': datetime.datetime(year, month, day, hour, min), 'time_length': int (1, 2, 4, 8) }
+      # priority: higher means higher priority
+      # time_length: lower means higher priority
+      for task in work_and_personal_tasks_transformed['personal']:
+        last_end_time = time_ranges_group[min(task['time_length'], len(tasks_relative_priority)) - 1]['time_range'][1]
+        last_end_time_minus_hour_min = datetime(last_end_time.year, last_end_time.month, last_end_time.day)
+        td_diff = last_end_time_minus_hour_min - task['deadline']
+        # day_diff: int (0-14), lower means higher priority
+        day_diff = min(td_diff.days, 14)
+
+        # time_length_diff: int (0-7), lower means higher priority
+        time_length_diff = min(abs(len(time_ranges_group) - task['time_length']), 7)
+        
+        task_type_index = get_task_type_index(task['priority'], day_diff, task['time_length'])
+        num_time_ranges = min(task['time_length'], len(time_ranges_group))
+        sum_type_ranking = 0
+        for i in range(num_time_ranges):
+          sum_type_ranking += time_ranges_group[i]['rankings'][task_type_index]
+        # average_type_ranking: int (1-100), higher means higher priority
+        average_type_ranking = sum_type_ranking / num_time_ranges
+
+        # transforms the value into range 0-1
+        values_transformed = {
+          'a': task['priority'] / 3,
+          'b': (9 - task['time_length']) / 9,
+          'c': (15 - day_diff) / 15,
+          # CONTINUE HERE
+          'd': average_type_ranking / 100,
+          'e': (8 - time_length_diff) / 8,
+        }
+
+        # DEBUG
+        pprint(values_transformed)
+    stop = True
 
 # TEST
 def test():
