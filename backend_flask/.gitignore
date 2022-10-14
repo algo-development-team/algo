@@ -4,3 +4,4 @@ client_secret.json
 /env
 **/__pycache__
 /migrations
+/db_reference_docs

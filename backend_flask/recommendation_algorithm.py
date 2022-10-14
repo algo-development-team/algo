@@ -301,81 +301,36 @@ def merge_tasks_time_ranges(tasks):
     merged_tasks[task_id_str] = merged_time_ranges
   return merged_tasks
 
-def get_tasks_with_highest_relative_priority(id):
-  from models import User
-  user = User.query.get(id)
-  (sleep_end_today_or_now, sleep_start_tomorrow) = get_one_full_day(user.sleep_time_range)
-  work_and_personal_time_ranges = get_work_and_personal_time_ranges(id, sleep_end_today_or_now, sleep_start_tomorrow, user.work_time_range, user.sleep_time_range)
+# helper function
+# parameter specification:
+# work_and_personal_time_ranges_rankings: { 'work': time_ranges_groups, 'personal': time_ranges_groups }
+# time_ranges_groups: { 'time_range': (start_time, end_time), 'rankings': (urgent, deep, shallow) }[]
+# urgent, deep, shallow: 1-100
+# work_and_personal_tasks_transformed: { 'work': task[], 'personal': task[] }
+# task: { 'id': int, 'section': int (1-4), 'priority': int (1-3), 'deadline': datetime.datetime(year, month, day, hour, min), 'time_length': int (1, 2, 4, 8), 'time_ranges': [] }
+# return value specfication:
+# { 'task_id_str': time_ranges[] (time_ranges sorted in sequential order) }
+# can be empty if work_and_personal_tasks_transformed[workspace_type] == [] or work_and_personal_time_ranges_rankings[workspace_type] == []
+def get_allocatable_tasks_time_ranges(work_and_personal_time_ranges_rankings, work_and_personal_tasks_transformed, workspace_type, parameters):
+  num_tasks = len(work_and_personal_tasks_transformed[workspace_type])
+  if num_tasks == 0:
+    return {}
   
-  # DEBUG
-  # print('work_and_personal_time_ranges:')
-  # pprint(work_and_personal_time_ranges)
-  
-  work_days = user.get_work_days()
-  rankings = user.get_rankings()
-  tasks = user.get_tasks()
-  
-  work_and_personal_tasks = seperate_work_and_personal_tasks(tasks)
-  
-  # DEBUG
-  # print('work_and_personal_tasks:')
-  # pprint(work_and_personal_tasks)
-  
-  # work_and_personal_time_ranges_rankings['work' or 'personal'] data structure:
-  # { 'time_range': (start_time, end_time), 'rankings': (urgent, deep, shallow) }[][]
-  # urgent, deep, shallow: 1-100
-  work_and_personal_time_ranges_rankings = get_work_and_personal_time_ranges_rankings(
-    work_and_personal_time_ranges=work_and_personal_time_ranges,
-    work_days=work_days,
-    rankings=rankings
-  )
-
-  # DEBUG
-  # print('work_and_personal_time_ranges_rankings')
-  # pprint(work_and_personal_time_ranges_rankings)
-
-  # constant parameters for recommendation algorithm
-  parameters = {
-    'a': 3,
-    'b': 1,
-    'c': 3,
-    'd': 2,
-    'e': 2
-  }
-
-  work_and_personal_tasks_transformed = {
-    'work': get_tasks_transformed(work_and_personal_tasks['work']), 
-    'personal': get_tasks_transformed(work_and_personal_tasks['personal'])
-  }
-
-  # DEBUG
-  # print('work_and_personal_tasks_transformed:')
-  # pprint(work_and_personal_tasks_transformed)
-
-  # CURRENTLY TESTING HERE
-  # workspace1.workspace_type SWITCHED TO WorkspaceType.PERSONAL TO ACCOMODATE FOR TESTING TIME
-  # RESET 'personal' TO 'work' AFTER TESTING IS COMPLETE
-
-  num_groups = len(work_and_personal_time_ranges_rankings['personal'])
+  num_groups = len(work_and_personal_time_ranges_rankings[workspace_type])
   i = 0
   while (i < num_groups):
-    # time_ranges_group data structure:
-    # { 'time_range': (start_time, end_time), 'rankings': (urgent, deep, shallow) }[]
-    # urgent, deep, shallow: 1-100
-    time_ranges_group = work_and_personal_time_ranges_rankings['personal'][i]
+    time_ranges_group = work_and_personal_time_ranges_rankings[workspace_type][i]
     task_with_max_relative_priority = {
-        'task_index': -1,
-        'relative_priority': -1,
-        'num_time_ranges': -1
+        'task_index': 0,
+        'relative_priority': 0,
+        'num_time_ranges': 0
       }
     first_task_with_max_relative_priority_set = False
     
-    for j in range(len(work_and_personal_tasks_transformed['personal'])):
-      # task data structure:
-      # { 'id': int, 'section': int (1-4), 'priority': int (1-3), 'deadline': datetime.datetime(year, month, day, hour, min), 'time_length': int (1, 2, 4, 8), 'time_ranges': [] }
+    for j in range(num_tasks):
       # priority: higher means higher priority
       # time_length: lower means higher priority
-      task = work_and_personal_tasks_transformed['personal'][j]
+      task = work_and_personal_tasks_transformed[workspace_type][j]
 
       if task['time_length'] == 0:
         continue
@@ -423,37 +378,96 @@ def get_tasks_with_highest_relative_priority(id):
     
     task_index = task_with_max_relative_priority['task_index']
     num_time_ranges = task_with_max_relative_priority['num_time_ranges']
-    work_and_personal_tasks_transformed['personal'][task_index]['time_ranges'].extend([time_range['time_range'] for time_range in work_and_personal_time_ranges_rankings['personal'][i][:num_time_ranges]])
-    work_and_personal_tasks_transformed['personal'][task_index]['time_length'] -= num_time_ranges
-    work_and_personal_time_ranges_rankings['personal'][i] = work_and_personal_time_ranges_rankings['personal'][i][num_time_ranges:]
+    
+    # if no task has been selected for task_with_relative_priority, break the loop (there are no task); this is to prevent bugs in the statements below
+    if not first_task_with_max_relative_priority_set:
+      break
+    
+    work_and_personal_tasks_transformed[workspace_type][task_index]['time_ranges'].extend([time_range['time_range'] for time_range in work_and_personal_time_ranges_rankings[workspace_type][i][:num_time_ranges]])
+    work_and_personal_tasks_transformed[workspace_type][task_index]['time_length'] -= num_time_ranges
+    work_and_personal_time_ranges_rankings[workspace_type][i] = work_and_personal_time_ranges_rankings[workspace_type][i][num_time_ranges:]
 
-    work_and_personal_tasks_transformed['personal'] = combine_sections_time_length(work_and_personal_tasks_transformed['personal'])
+    work_and_personal_tasks_transformed[workspace_type] = combine_sections_time_length(work_and_personal_tasks_transformed[workspace_type])
 
-    tasks_with_time_length_remaining = [task for task in work_and_personal_tasks_transformed['personal'] if task['time_length'] != 0]
+    tasks_with_time_length_remaining = [task for task in work_and_personal_tasks_transformed[workspace_type] if task['time_length'] != 0]
+    
     # if all the tasks have been allocated, break the loop
     if len(tasks_with_time_length_remaining) == 0:
       break
 
     # if all the time ranges in a group has been allocated, move to the next time ranges group
-    if work_and_personal_time_ranges_rankings['personal'][i] == []:
+    if work_and_personal_time_ranges_rankings[workspace_type][i] == []:
       i += 1
 
-  # DEBUG
-  print('work_and_personal_time_ranges_rankings[\'personal\']:')
-  pprint(work_and_personal_time_ranges_rankings['personal'])
-
-  # DEBUG
-  print('work_and_personal_tasks_transformed[\'personal\']:')
-  pprint(work_and_personal_tasks_transformed['personal'])
-
-  # tasks_sections_combined_and_time_ranges_sorted data structure
-  # { 'task_id_str': time_ranges[] (time_ranges sorted in sequential order) }
-  tasks_sections_combined_and_time_ranges_sorted = combine_tasks_sections_and_time_ranges_sorted(work_and_personal_tasks_transformed['personal'])
+  tasks_sections_combined_and_time_ranges_sorted = combine_tasks_sections_and_time_ranges_sorted(work_and_personal_tasks_transformed[workspace_type])
   tasks_time_ranges_merged = merge_tasks_time_ranges(tasks_sections_combined_and_time_ranges_sorted)
 
+  return tasks_time_ranges_merged
+
+# parameter value specification:
+# id: int (valid User id)
+# return value specification:
+# { 'work': allocatable_tasks_time_ranges, 'personal': allocatable_tasks_time_ranges }
+# allocatable_tasks_time_ranges: { 'task_id_str': time_ranges[] (time_ranges sorted in sequential order) }
+# allocatable_tasks_time_ranges: can be empty if work_and_personal_tasks_transformed[workspace_type] == [] or work_and_personal_time_ranges_rankings[workspace_type] == []
+def get_tasks_with_highest_relative_priority(id):
+  from models import User
+  user = User.query.get(id)
+  (sleep_end_today_or_now, sleep_start_tomorrow) = get_one_full_day(user.sleep_time_range)
+  work_and_personal_time_ranges = get_work_and_personal_time_ranges(id, sleep_end_today_or_now, sleep_start_tomorrow, user.work_time_range, user.sleep_time_range)
+  
   # DEBUG
-  print('tasks_time_ranges_merged:')
-  pprint(tasks_time_ranges_merged)
+  # print('work_and_personal_time_ranges:')
+  # pprint(work_and_personal_time_ranges)
+  
+  work_days = user.get_work_days()
+  rankings = user.get_rankings()
+  tasks = user.get_tasks()
+  
+  work_and_personal_tasks = seperate_work_and_personal_tasks(tasks)
+  
+  # DEBUG
+  # print('work_and_personal_tasks:')
+  # pprint(work_and_personal_tasks)
+
+  work_and_personal_time_ranges_rankings = get_work_and_personal_time_ranges_rankings(
+    work_and_personal_time_ranges=work_and_personal_time_ranges,
+    work_days=work_days,
+    rankings=rankings
+  )
+
+  # DEBUG
+  print('work_and_personal_time_ranges_rankings')
+  pprint(work_and_personal_time_ranges_rankings)
+
+  # constant parameters for recommendation algorithm
+  parameters = {
+    'a': 3,
+    'b': 1,
+    'c': 3,
+    'd': 2,
+    'e': 2
+  }
+
+  work_and_personal_tasks_transformed = {
+    'work': get_tasks_transformed(work_and_personal_tasks['work']), 
+    'personal': get_tasks_transformed(work_and_personal_tasks['personal'])
+  }
+
+  # DEBUG
+  print('work_and_personal_tasks_transformed:')
+  pprint(work_and_personal_tasks_transformed)
+
+  allocatable_tasks_time_ranges = {
+    'work': get_allocatable_tasks_time_ranges(work_and_personal_time_ranges_rankings, work_and_personal_tasks_transformed, 'work', parameters),
+    'personal': get_allocatable_tasks_time_ranges(work_and_personal_time_ranges_rankings, work_and_personal_tasks_transformed, 'personal', parameters)
+  }
+
+  # DEBUG
+  print('allocatable_tasks_time_ranges:')
+  pprint(allocatable_tasks_time_ranges)
+
+  return allocatable_tasks_time_ranges
 
 # TEST
 def test():

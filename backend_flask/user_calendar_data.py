@@ -1,6 +1,5 @@
 # FUTURE CHANGES
 # get_user_events_time_range should have an additional field that takes in which calendars' tasks are fetched
-# only_primary field in get_user_events_time_range should be removed in the future
 
 from models import User
 from googleapiclient.discovery import build
@@ -80,7 +79,7 @@ def seq_insert_new_events_into_events(events, new_events):
 # end_time_str (inside the function): 'YYYY-MM-DDTHH:MM:SSZ-HH:MM'
 # start_time: datetime.datetime(year, month, day, hour, min)
 # end_time: datetime.datetime(year, month, day, hour, min)
-def get_user_events_time_range(id, time_min, time_max, only_primary=False):
+def get_user_events_time_range(id, time_min, time_max):
   user = User.query.get(id)
   creds = Credentials(token=None, refresh_token=user.refresh_token, token_uri=TOKEN_URI, client_id=CLIENT_ID, client_secret=CLIENT_SECRET)
   service = build('calendar', 'v3', credentials=creds)
@@ -91,21 +90,17 @@ def get_user_events_time_range(id, time_min, time_max, only_primary=False):
   time_max_str = time_max_with_buffer.strftime('%Y-%m-%dT%H:%M:00Z')
   events = []
   result = []
-  if only_primary:
-    events_result = service.events().list(calendarId='primary', timeMin=time_min_str, timeMax=time_max_str, singleEvents=True, orderBy='startTime').execute()
-    events += events_result['items']
-  else:
-    calendar_id_list = get_user_calendar_id_list(id)
-    for calendar_id in calendar_id_list:
-      events_result = service.events().list(calendarId=calendar_id, timeMin=time_min_str, timeMax=time_max_str, singleEvents=True, orderBy='startTime').execute()
-      new_events = events_result['items']
-      # only keep events that have both start and end time
-      new_events_with_time_range = [event for event in new_events if 'dateTime' in event['start'] and 'dateTime' in event['end']]
-      if len(events) == 0:
-        events = new_events_with_time_range
-      else:  
-        result = seq_insert_new_events_into_events(events, new_events_with_time_range)
-        events = result
+  calendar_id_list = get_user_calendar_id_list(id)
+  for calendar_id in calendar_id_list:
+    events_result = service.events().list(calendarId=calendar_id, timeMin=time_min_str, timeMax=time_max_str, singleEvents=True, orderBy='startTime').execute()
+    new_events = events_result['items']
+    # only keep events that have both start and end time
+    new_events_with_time_range = [event for event in new_events if 'dateTime' in event['start'] and 'dateTime' in event['end']]
+    if len(events) == 0:
+      events = new_events_with_time_range
+    else:  
+      result = seq_insert_new_events_into_events(events, new_events_with_time_range)
+      events = result
 
   remove_dt_tzinfo = lambda dt_tzinfo : datetime(dt_tzinfo.year, dt_tzinfo.month, dt_tzinfo.day, dt_tzinfo.hour, dt_tzinfo.minute) 
   events_time_range = [(
