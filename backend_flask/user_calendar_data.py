@@ -60,10 +60,15 @@ def get_user_calendar_id_list(id):
 def seq_insert_new_events_into_events(events, new_events):
   events_copy = [deepcopy(event) for event in events]
   for new_event in new_events:
+    inserted = False
     for i in range(len(events_copy)):
       if new_event['start']['dateTime'] < events_copy[i]['start']['dateTime']:
         events_copy.insert(i, new_event)
+        inserted = True
         break
+    if not inserted:
+      events_copy.append(new_event)
+
   return events_copy
 
 # parameters specification:

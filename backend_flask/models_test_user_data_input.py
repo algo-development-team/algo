@@ -21,7 +21,7 @@ if input_type == 1:
   db.session.commit()
 
 if input_type == 2:
-  print('Enter the sleep time range: ex: 9:00-17:00')
+  print('Enter the sleep time range: ex: 23:00-7:00')
   sleep_time_range = input()
   user.sleep_time_range = sleep_time_range
   db.session.commit()

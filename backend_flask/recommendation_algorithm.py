@@ -258,10 +258,15 @@ def combine_sections_time_length(tasks):
 def seq_insert_new_time_ranges_into_time_ranges(time_ranges, new_time_ranges):
   time_ranges_copy = time_ranges[:]
   for new_time_range in new_time_ranges:
+    inserted = False
     for i in range(len(time_ranges_copy)):
       if new_time_range[0] < time_ranges_copy[i][0]:
         time_ranges_copy.insert(i, new_time_range)
+        inserted = True
         break
+    if not inserted:
+      time_ranges_copy.append(new_time_range)
+
   return time_ranges_copy
 
 # helper function
@@ -276,8 +281,9 @@ def combine_tasks_sections_and_time_ranges_sorted(tasks):
     if task_id_str not in combined_tasks_sections_and_time_ranges_sorted:
       combined_tasks_sections_and_time_ranges_sorted[task_id_str] = task['time_ranges']  
     else:
-      # STOPPPED HERE
       combined_tasks_sections_and_time_ranges_sorted[task_id_str] = seq_insert_new_time_ranges_into_time_ranges(combined_tasks_sections_and_time_ranges_sorted[task_id_str], task['time_ranges'])  
+      # combined_tasks_sections_and_time_ranges_sorted[task_id_str] += task['time_ranges']  
+
   return combined_tasks_sections_and_time_ranges_sorted 
 
 # helper function
@@ -381,6 +387,8 @@ def get_allocatable_tasks_time_ranges(work_and_personal_time_ranges_rankings, wo
     
     # if no task has been selected for task_with_relative_priority, break the loop (there are no task); this is to prevent bugs in the statements below
     if not first_task_with_max_relative_priority_set:
+      # DEBUG
+      # print('NO TASK WITH MAX RELATIVE PRIORITY SELECTED')
       break
     
     work_and_personal_tasks_transformed[workspace_type][task_index]['time_ranges'].extend([time_range['time_range'] for time_range in work_and_personal_time_ranges_rankings[workspace_type][i][:num_time_ranges]])
@@ -393,14 +401,32 @@ def get_allocatable_tasks_time_ranges(work_and_personal_time_ranges_rankings, wo
     
     # if all the tasks have been allocated, break the loop
     if len(tasks_with_time_length_remaining) == 0:
+      # DEBUG
+      # print('NO TASKS WITH TIME LENGTH REMAINING')
       break
 
     # if all the time ranges in a group has been allocated, move to the next time ranges group
     if work_and_personal_time_ranges_rankings[workspace_type][i] == []:
+      # DEBUG
+      # if i == num_groups - 1:
+      #   print(workspace_type + ':')
+      #   print('NEXT TIME RANGES GROUP')
+      #   pprint(work_and_personal_tasks_transformed[workspace_type])
       i += 1
 
   tasks_sections_combined_and_time_ranges_sorted = combine_tasks_sections_and_time_ranges_sorted(work_and_personal_tasks_transformed[workspace_type])
+  
+  # DEBUG
+  # print(workspace_type + ':')
+  # print('tasks_sections_combined_and_time_ranges_sorted:')
+  # pprint(tasks_sections_combined_and_time_ranges_sorted)
+
   tasks_time_ranges_merged = merge_tasks_time_ranges(tasks_sections_combined_and_time_ranges_sorted)
+  
+  # DEBUG
+  # print(workspace_type + ':')
+  # print('tasks_time_ranges_merged:')
+  # pprint(tasks_time_ranges_merged)
 
   return tasks_time_ranges_merged
 
@@ -417,8 +443,8 @@ def get_tasks_with_highest_relative_priority(id):
   work_and_personal_time_ranges = get_work_and_personal_time_ranges(id, sleep_end_today_or_now, sleep_start_tomorrow, user.work_time_range, user.sleep_time_range)
   
   # DEBUG
-  # print('work_and_personal_time_ranges:')
-  # pprint(work_and_personal_time_ranges)
+  print('work_and_personal_time_ranges:')
+  pprint(work_and_personal_time_ranges)
   
   work_days = user.get_work_days()
   rankings = user.get_rankings()
@@ -437,8 +463,8 @@ def get_tasks_with_highest_relative_priority(id):
   )
 
   # DEBUG
-  print('work_and_personal_time_ranges_rankings')
-  pprint(work_and_personal_time_ranges_rankings)
+  # print('work_and_personal_time_ranges_rankings')
+  # pprint(work_and_personal_time_ranges_rankings)
 
   # constant parameters for recommendation algorithm
   parameters = {
@@ -455,8 +481,8 @@ def get_tasks_with_highest_relative_priority(id):
   }
 
   # DEBUG
-  print('work_and_personal_tasks_transformed:')
-  pprint(work_and_personal_tasks_transformed)
+  # print('work_and_personal_tasks_transformed:')
+  # pprint(work_and_personal_tasks_transformed)
 
   allocatable_tasks_time_ranges = {
     'work': get_allocatable_tasks_time_ranges(work_and_personal_time_ranges_rankings, work_and_personal_tasks_transformed, 'work', parameters),

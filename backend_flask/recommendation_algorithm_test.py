@@ -1,4 +1,4 @@
-from recommendation_algorithm import get_one_full_day, divide_time_ranges_into_fifteen_minute_groups, get_task_type_index, get_task_type
+from recommendation_algorithm import get_one_full_day, divide_time_ranges_into_fifteen_minute_groups, get_task_type_index, get_task_type, seq_insert_new_time_ranges_into_time_ranges
 from datetime import datetime
 from pprint import pprint
 
@@ -23,6 +23,17 @@ end_time3 = datetime(2022, 10, 13, 0, 15)
 time_ranges_dt = [(start_time1, end_time1), (start_time2, end_time2), (start_time3, end_time3)]
 fifteen_minute_groups = divide_time_ranges_into_fifteen_minute_groups(time_ranges_dt)
 
+time_ranges_group1 = [
+  (datetime(2022, 10, 12, 12, 0), datetime(2022, 10, 12, 12, 15)),
+  (datetime(2022, 10, 12, 12, 30), datetime(2022, 10, 12, 12, 45)),
+  (datetime(2022, 10, 12, 14, 0), datetime(2022, 10, 12, 14, 15))
+]
+time_ranges_group2 = [
+  (datetime(2022, 10, 12, 11, 45), datetime(2022, 10, 12, 12, 0)),
+  (datetime(2022, 10, 12, 12, 15), datetime(2022, 10, 12, 12, 30)),
+  (datetime(2022, 10, 12, 13, 0), datetime(2022, 10, 12, 13, 15))
+]
+
 priorities = [1, 2, 3]
 day_diffs = [0, 1, 2, 7, 14]
 time_lengths = [1, 2, 4, 8]
@@ -36,6 +47,8 @@ for priority in priorities:
           'day_diff': day_diff,
           'time_length': time_length
         })
+
+combined_time_ranges_group = seq_insert_new_time_ranges_into_time_ranges(time_ranges_group1, time_ranges_group2)
 
 sep()
 print('Tested Functions:')
@@ -55,7 +68,12 @@ print('Divide Time Ranges Into Fifteen Minute Ranges:')
 pprint(fifteen_minute_groups)
 sep()
 sep()
-print('Get Task Type Index:')
-for task_type in task_types:
-  pprint(task_type)
+# uncomment to see the output of this function
+# print('Get Task Type Index:')
+# for task_type in task_types:
+#   pprint(task_type)
+sep()
+sep()
+print('Seq Insert New Time Ranges Into Time Ranges:')
+pprint(combined_time_ranges_group)
 sep()
