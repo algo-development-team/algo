@@ -1,6 +1,7 @@
 from models import WorkspaceType, Priority, TimeLength
 from user_calendar_data import get_work_and_personal_time_ranges, parse_user_time_range, end_time_round
 from datetime import datetime, timedelta
+from copy import deepcopy
 from pprint import pprint
 
 # helper function
@@ -230,8 +231,26 @@ def multiply_parameters_and_values(parameters, values, keys):
 # task: { 'id': int, 'section': int (1-4), 'priority': int (1-3), 'deadline': datetime.datetime(year, month, day, hour, min), 'time_length': int (1, 2, 4, 8), 'time_ranges': datetime.datetime(year, month, day, hour, min)[] }[]
 # return value specification:
 # task: { 'id': int, 'section': int (1-4), 'priority': int (1-3), 'deadline': datetime.datetime(year, month, day, hour, min), 'time_length': int (1, 2, 4, 8), 'time_ranges': datetime.datetime(year, month, day, hour, min)[] }[]
+# tasks already sorted in order of 'id' and 'section'
 def combined_sections(tasks):
-  combined_tasks = tasks[:]
+  combined_tasks = [deepcopy(task) for task in tasks]
+
+  remaining_time_length = {}
+  for task in combined_tasks:
+    if task['time_length'] < 8:
+      task_id_str = str(task['id'])
+      if task_id_str not in remaining_time_length:
+        remaining_time_length[task_id_str] = task['time_length']  
+      else:
+        remaining_time_length[task_id_str] += task['time_length']  
+  for i in range(len(combined_tasks)):
+    task = combined_tasks[i]
+    if task['time_length'] < 8:
+      task_id_str = str(task['id'])
+      new_time_length = min(remaining_time_length[task_id_str], 8)
+      combined_tasks[i]['time_length'] = new_time_length
+      remaining_time_length[task_id_str] -= new_time_length
+
   return combined_tasks
 
 def get_tasks_with_highest_relative_priority(id):
@@ -378,6 +397,7 @@ def get_tasks_with_highest_relative_priority(id):
   # DEBUG
   print('work_and_personal_tasks_transformed[\'personal\']:')
   pprint(work_and_personal_tasks_transformed['personal'])
+  # pprint([(task['id'], len(task['time_ranges'])) for task in work_and_personal_tasks_transformed['personal']])
 
 # TEST
 def test():
