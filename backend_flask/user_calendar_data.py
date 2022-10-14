@@ -10,6 +10,7 @@ import os
 from datetime import datetime, timedelta
 from copy import deepcopy
 from pprint import pprint
+from zoneinfo import ZoneInfo
 
 CLIENT_ID = os.getenv('CLIENT_ID')
 CLIENT_SECRET = os.getenv('CLIENT_SECRET')
@@ -71,6 +72,14 @@ def seq_insert_new_events_into_events(events, new_events):
 
   return events_copy
 
+# helper function
+# parameter specification:
+# dt: datetime.datetime(year, month, day, hour, min, tzinfo)
+# user_zone_info: ZoneInfo object
+def adjust_timezone_and_remove_tzinfo(dt, user_zone_info):
+  new_dt = dt.astimezone(user_zone_info).replace(tzinfo=None)
+  return new_dt
+
 # parameters specification:
 # id: user_id that has valid refresh_token (non-test user)
 # time_min: datetime.datetime(year, month, day, hour, min)
@@ -107,11 +116,14 @@ def get_user_events_time_range(id, time_min, time_max):
       result = seq_insert_new_events_into_events(events, new_events_with_time_range)
       events = result
 
-  remove_dt_tzinfo = lambda dt_tzinfo : datetime(dt_tzinfo.year, dt_tzinfo.month, dt_tzinfo.day, dt_tzinfo.hour, dt_tzinfo.minute) 
+  user_time_zone = get_user_time_zone(id)
+  user_zone_info = ZoneInfo(user_time_zone)
+
   events_time_range = [(
-    remove_dt_tzinfo(datetime.strptime(event['start']['dateTime'], '%Y-%m-%dT%H:%M:%S%z')), 
-    remove_dt_tzinfo(datetime.strptime(event['end']['dateTime'], '%Y-%m-%dT%H:%M:%S%z'))) 
-    for event in events]
+    adjust_timezone_and_remove_tzinfo(datetime.strptime(event['start']['dateTime'], '%Y-%m-%dT%H:%M:%S%z'), user_zone_info),
+    adjust_timezone_and_remove_tzinfo(datetime.strptime(event['end']['dateTime'], '%Y-%m-%dT%H:%M:%S%z'), user_zone_info),
+  ) for event in events]
+
   # eliminate time ranges that are in the buffer time, where the cut off for events at the edge are at time_min and time_max
   events_time_range_remove_buffer = []
   for event_time_range in events_time_range:
