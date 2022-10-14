@@ -1,7 +1,6 @@
 from models import WorkspaceType, Priority, TimeLength
 from user_calendar_data import get_work_and_personal_time_ranges, parse_user_time_range, end_time_round
 from datetime import datetime, timedelta
-from copy import deepcopy
 from pprint import pprint
 
 # helper function
@@ -158,7 +157,7 @@ def get_work_and_personal_time_ranges_rankings(
 # parameter specification:
 # tasks: Task[]
 # return value specification:
-# { 'id': int, 'section': int (1-4), 'priority': int (1-3), 'deadline': datetime.datetime(year, month, day, hour, min), 'time_length': int (1, 2, 4, 8) }[]
+# { 'id': int, 'section': int (1-4), 'priority': int (1-3), 'deadline': datetime.datetime(year, month, day, hour, min), 'time_length': int (1, 2, 4, 8), 'time_ranges': [] }[]
 def get_tasks_transformed(tasks):
   tasks_transformed = []
   for task in tasks:
@@ -172,6 +171,7 @@ def get_tasks_transformed(tasks):
         'priority': priority_value,
         'deadline': task.deadline,
         'time_length': total_time_length - (i * 8) if total_time_length - (i * 8) < 8 else 8,
+        'time_ranges': [],
       }
       tasks_transformed.append(task_transformed)
   return tasks_transformed
@@ -242,8 +242,8 @@ def get_tasks_with_highest_relative_priority(id):
   work_and_personal_tasks = seperate_work_and_personal_tasks(tasks)
   
   # DEBUG
-  # print('work_and_personal_tasks:')
-  # pprint(work_and_personal_tasks)
+  print('work_and_personal_tasks:')
+  pprint(work_and_personal_tasks)
   
   # work_and_personal_time_ranges_rankings['work' or 'personal'] data structure:
   # { 'time_range': (start_time, end_time), 'rankings': (urgent, deep, shallow) }[][]
@@ -255,8 +255,8 @@ def get_tasks_with_highest_relative_priority(id):
   )
 
   # DEBUG
-  # print('work_and_personal_time_ranges_rankings')
-  # pprint(work_and_personal_time_ranges_rankings)
+  print('work_and_personal_time_ranges_rankings')
+  pprint(work_and_personal_time_ranges_rankings)
 
   # constant parameters for recommendation algorithm
   parameters = {
@@ -266,10 +266,6 @@ def get_tasks_with_highest_relative_priority(id):
     'd': 2,
     'e': 2
   }
-
-  # DEBUG (copied dictionaries used for debugging only)
-  # work_and_personal_tasks_copy = deepcopy(work_and_personal_tasks)
-  # work_and_personal_time_ranges_copy = deepcopy(work_and_personal_time_ranges)
 
   work_and_personal_tasks_transformed = {
     'work': get_tasks_transformed(work_and_personal_tasks['work']), 
@@ -284,62 +280,96 @@ def get_tasks_with_highest_relative_priority(id):
   # workspace1.workspace_type SWITCHED TO WorkspaceType.PERSONAL TO ACCOMODATE FOR TESTING TIME
   # RESET 'personal' TO 'work' AFTER TESTING IS COMPLETE
 
-  stop = False
-  while (not stop):
-  # while (
-  #   len(work_and_personal_tasks_transformed['personal']) != 0
-  #   and
-  #   len(work_and_personal_time_ranges_rankings['personal']) != 0
-  # ):
-    # work tasks relative priority
+  num_groups = len(work_and_personal_time_ranges_rankings['personal'])
+  i = 0
+  while (i < num_groups):
     # time_ranges_group data structure:
     # { 'time_range': (start_time, end_time), 'rankings': (urgent, deep, shallow) }[]
     # urgent, deep, shallow: 1-100
-    for time_ranges_group in work_and_personal_time_ranges_rankings['personal']:
-      tasks_relative_priority = []
-      
-      # DEBUG
-      print('time_ranges_group round:')
-      
+    time_ranges_group = work_and_personal_time_ranges_rankings['personal'][i]
+    task_with_max_relative_priority = {
+        'task_index': -1,
+        'relative_priority': -1,
+        'num_time_ranges': -1
+      }
+    first_task_with_max_relative_priority_set = False
+    
+    for j in range(len(work_and_personal_tasks_transformed['personal'])):
       # task data structure:
-      # { 'id': int, 'section': int (1-4), 'priority': int (1-3), 'deadline': datetime.datetime(year, month, day, hour, min), 'time_length': int (1, 2, 4, 8) }
+      # { 'id': int, 'section': int (1-4), 'priority': int (1-3), 'deadline': datetime.datetime(year, month, day, hour, min), 'time_length': int (1, 2, 4, 8), 'time_ranges': [] }
       # priority: higher means higher priority
       # time_length: lower means higher priority
-      for task in work_and_personal_tasks_transformed['personal']:
-        last_end_time = time_ranges_group[min(task['time_length'], len(tasks_relative_priority)) - 1]['time_range'][1]
-        last_end_time_minus_hour_min = datetime(last_end_time.year, last_end_time.month, last_end_time.day)
-        td_diff = last_end_time_minus_hour_min - task['deadline']
-        # day_diff: int (0-14), lower means higher priority
-        day_diff = min(td_diff.days, 14)
+      task = work_and_personal_tasks_transformed['personal'][j]
 
-        # time_length_diff: int (0-7), lower means higher priority
-        time_length_diff = min(abs(len(time_ranges_group) - task['time_length']), 7)
-        
-        task_type_index = get_task_type_index(task['priority'], day_diff, task['time_length'])
-        num_time_ranges = min(task['time_length'], len(time_ranges_group))
-        sum_type_ranking = 0
-        for i in range(num_time_ranges):
-          sum_type_ranking += time_ranges_group[i]['rankings'][task_type_index]
-        # average_type_ranking: int (1-100), higher means higher priority
-        average_type_ranking = sum_type_ranking / num_time_ranges
+      if task['time_length'] == 0:
+        print(f"task {task['id']}-{task['section']}: continue called")
+        continue
 
-        # transforms the value into range 0-1
-        values_transformed = {
-          'a': task['priority'] / 3,
-          'b': (9 - task['time_length']) / 9,
-          'c': (15 - day_diff) / 15,
-          'd': average_type_ranking / 100,
-          'e': (8 - time_length_diff) / 8,
-        }
+      last_end_time = time_ranges_group[min(task['time_length'], len(time_ranges_group)) - 1]['time_range'][1]
+      last_end_time_minus_hour_min = datetime(last_end_time.year, last_end_time.month, last_end_time.day)
+      td_diff = last_end_time_minus_hour_min - task['deadline']
+      # day_diff: int (0-14), lower means higher priority
+      day_diff = min(td_diff.days, 14)
 
-        task_relative_priority = multiply_parameters_and_values(parameters, values_transformed, ['a', 'b', 'c', 'd', 'e'])
-        tasks_relative_priority.append(task_relative_priority)
+      # time_length_diff: int (0-7), lower means higher priority
+      time_length_diff = min(abs(len(time_ranges_group) - task['time_length']), 7)
 
-      # DEBUG
-      print('tasks_relative_priority:')
-      pprint(tasks_relative_priority)
+      task_type_index = get_task_type_index(task['priority'], day_diff, task['time_length'])
+      
+      # num_time_ranges: int (1-8), specifies how many 15 min time ranges the task will be allocated into        
+      num_time_ranges = min(task['time_length'], len(time_ranges_group))
+      sum_type_ranking = 0
+      for k in range(num_time_ranges):
+        sum_type_ranking += time_ranges_group[k]['rankings'][task_type_index]
+      # average_type_ranking: int (1-100), higher means higher priority
+      average_type_ranking = sum_type_ranking / num_time_ranges
 
-    stop = True
+      # transforms the value into range 0-1
+      values_transformed = {
+        'a': task['priority'] / 3,
+        'b': (9 - task['time_length']) / 9,
+        'c': (15 - day_diff) / 15,
+        'd': average_type_ranking / 100,
+        'e': (8 - time_length_diff) / 8,
+      }
+
+      task_relative_priority = multiply_parameters_and_values(parameters, values_transformed, ['a', 'b', 'c', 'd', 'e'])
+      # set the first_task_with_max_relative_priority_set 
+      if not first_task_with_max_relative_priority_set:
+        task_with_max_relative_priority['task_index'] = j
+        task_with_max_relative_priority['relative_priority'] = task_relative_priority
+        task_with_max_relative_priority['num_time_ranges'] = num_time_ranges
+        first_task_with_max_relative_priority_set = True
+      # update task_with_max_relative_priority with the task with currently highest relative priority
+      elif task_with_max_relative_priority['relative_priority'] < task_relative_priority:
+          task_with_max_relative_priority['task_index'] = j
+          task_with_max_relative_priority['relative_priority'] = task_relative_priority
+          task_with_max_relative_priority['num_time_ranges'] = num_time_ranges
+    
+    task_index = task_with_max_relative_priority['task_index']
+    num_time_ranges = task_with_max_relative_priority['num_time_ranges']
+    num_time_ranges_in_group = len(work_and_personal_time_ranges_rankings['personal'][i])
+    work_and_personal_tasks_transformed['personal'][task_index]['time_ranges'].extend(work_and_personal_time_ranges_rankings['personal'][i][:num_time_ranges])
+    work_and_personal_tasks_transformed['personal'][task_index]['time_length'] -= num_time_ranges
+    work_and_personal_time_ranges_rankings['personal'][i] = work_and_personal_time_ranges_rankings['personal'][i][num_time_ranges:]
+
+
+    tasks_with_time_length_remaining = [task for task in work_and_personal_tasks_transformed['personal'] if task['time_length'] != 0]
+    # if all the tasks have been allocated, break the loop
+    if len(tasks_with_time_length_remaining) == 0:
+      break
+
+    # if all the time ranges in a group has been allocated, move to the next time ranges group
+    if work_and_personal_time_ranges_rankings['personal'][i] == []:
+      i += 1
+
+  # DEBUG
+  # print('work_and_personal_time_ranges_rankings[\'personal\']:')
+  # pprint(work_and_personal_time_ranges_rankings['personal'])
+
+  # DEBUG
+  # print('work_and_personal_tasks_transformed[\'personal\']:')
+  # pprint(work_and_personal_tasks_transformed['personal'])
 
 # TEST
 def test():
