@@ -225,6 +225,15 @@ def multiply_parameters_and_values(parameters, values, keys):
     total += parameters[key] * values[key]
   return total
 
+# helper function
+# parameter specification:
+# task: { 'id': int, 'section': int (1-4), 'priority': int (1-3), 'deadline': datetime.datetime(year, month, day, hour, min), 'time_length': int (1, 2, 4, 8), 'time_ranges': datetime.datetime(year, month, day, hour, min)[] }[]
+# return value specification:
+# task: { 'id': int, 'section': int (1-4), 'priority': int (1-3), 'deadline': datetime.datetime(year, month, day, hour, min), 'time_length': int (1, 2, 4, 8), 'time_ranges': datetime.datetime(year, month, day, hour, min)[] }[]
+def combined_sections(tasks):
+  combined_tasks = tasks[:]
+  return combined_tasks
+
 def get_tasks_with_highest_relative_priority(id):
   from models import User
   user = User.query.get(id)
@@ -347,11 +356,11 @@ def get_tasks_with_highest_relative_priority(id):
     
     task_index = task_with_max_relative_priority['task_index']
     num_time_ranges = task_with_max_relative_priority['num_time_ranges']
-    num_time_ranges_in_group = len(work_and_personal_time_ranges_rankings['personal'][i])
     work_and_personal_tasks_transformed['personal'][task_index]['time_ranges'].extend(work_and_personal_time_ranges_rankings['personal'][i][:num_time_ranges])
     work_and_personal_tasks_transformed['personal'][task_index]['time_length'] -= num_time_ranges
     work_and_personal_time_ranges_rankings['personal'][i] = work_and_personal_time_ranges_rankings['personal'][i][num_time_ranges:]
 
+    work_and_personal_tasks_transformed['personal'] = combined_sections(work_and_personal_tasks_transformed['personal'])
 
     tasks_with_time_length_remaining = [task for task in work_and_personal_tasks_transformed['personal'] if task['time_length'] != 0]
     # if all the tasks have been allocated, break the loop
