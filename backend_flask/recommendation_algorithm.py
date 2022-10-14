@@ -242,8 +242,8 @@ def get_tasks_with_highest_relative_priority(id):
   work_and_personal_tasks = seperate_work_and_personal_tasks(tasks)
   
   # DEBUG
-  print('work_and_personal_tasks:')
-  pprint(work_and_personal_tasks)
+  # print('work_and_personal_tasks:')
+  # pprint(work_and_personal_tasks)
   
   # work_and_personal_time_ranges_rankings['work' or 'personal'] data structure:
   # { 'time_range': (start_time, end_time), 'rankings': (urgent, deep, shallow) }[][]
@@ -255,8 +255,8 @@ def get_tasks_with_highest_relative_priority(id):
   )
 
   # DEBUG
-  print('work_and_personal_time_ranges_rankings')
-  pprint(work_and_personal_time_ranges_rankings)
+  # print('work_and_personal_time_ranges_rankings')
+  # pprint(work_and_personal_time_ranges_rankings)
 
   # constant parameters for recommendation algorithm
   parameters = {
@@ -302,7 +302,6 @@ def get_tasks_with_highest_relative_priority(id):
       task = work_and_personal_tasks_transformed['personal'][j]
 
       if task['time_length'] == 0:
-        print(f"task {task['id']}-{task['section']}: continue called")
         continue
 
       last_end_time = time_ranges_group[min(task['time_length'], len(time_ranges_group)) - 1]['time_range'][1]
@@ -364,12 +363,12 @@ def get_tasks_with_highest_relative_priority(id):
       i += 1
 
   # DEBUG
-  # print('work_and_personal_time_ranges_rankings[\'personal\']:')
-  # pprint(work_and_personal_time_ranges_rankings['personal'])
+  print('work_and_personal_time_ranges_rankings[\'personal\']:')
+  pprint(work_and_personal_time_ranges_rankings['personal'])
 
   # DEBUG
-  # print('work_and_personal_tasks_transformed[\'personal\']:')
-  # pprint(work_and_personal_tasks_transformed['personal'])
+  print('work_and_personal_tasks_transformed[\'personal\']:')
+  pprint(work_and_personal_tasks_transformed['personal'])
 
 # TEST
 def test():
