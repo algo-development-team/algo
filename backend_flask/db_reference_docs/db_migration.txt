@@ -1,9 +1,0 @@
-# make sure the flask-migrate package is installed
->>> flask db init
->>> flask db migrate
-
-# migrates to new schemas 
->>> flask db upgrade 
-
-# migrates back to old schemas
->>> flask db downgrade
