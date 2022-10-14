@@ -238,7 +238,17 @@ def get_day_diff_value_transformed(day_diff):
   elif day_diff == -3:
     day_diff = 14
   day_diff_positive = 15 - day_diff
-  day_diff_value_transformed = day_diff_positive ** 5 / 759375
+  if day_diff_positive == 15:
+    day_diff_positive = 50
+  elif day_diff_positive == 14:
+    day_diff_positive = 30
+  elif day_diff_positive == 13:
+    day_diff_positive = 20
+  elif day_diff_positive == 12:
+    day_diff_positive = 15
+  elif day_diff_positive == 11:
+    day_diff_positive = 12
+  day_diff_value_transformed = day_diff_positive ** 2 / 2500
   return day_diff_value_transformed
 
 # helper function
