@@ -194,12 +194,11 @@ def get_task_type(task_type_index):
 # helper function
 # parameter specification:
 # priority: int (1-3)
-# day_diff: int (0-14)
+# day_diff: int (-3-14)
 # time_length: int (1, 2, 4, 8)
 # return value specification:
 # int (1-3)
 def get_task_type_index(priority, day_diff, time_length):
-  
   # shallow by-default
   if priority == 1:
     return 2
@@ -213,8 +212,8 @@ def get_task_type_index(priority, day_diff, time_length):
       return 1
   # urgent or deep by-default
   elif priority == 3:
-    # urgent (day-before-yesterday, yesterday, today, tomorrow, day-after-tomorrow)
-    if day_diff <= 2:
+    # urgent (yesterday, today, tomorrow, day-after-tomorrow)
+    if -1 <= day_diff <= 2:
       return 0
     # deep 
     else:
@@ -225,6 +224,22 @@ def multiply_parameters_and_values(parameters, values, keys):
   for key in keys:
     total += parameters[key] * values[key]
   return total
+
+# helper function
+# parameter specification:
+# day_diff: int (-3-14)
+# return value specification:
+# float (0-1)
+def get_day_diff_value_transformed(day_diff):
+  if day_diff == -1:
+    day_diff = 2
+  elif day_diff == -2:
+    day_diff = 7
+  elif day_diff == -3:
+    day_diff = 14
+  day_diff_positive = 15 - day_diff
+  day_diff_value_transformed = day_diff_positive ** 5 / 759375
+  return day_diff_value_transformed
 
 # helper function
 # parameter specification:
@@ -282,7 +297,6 @@ def combine_tasks_sections_and_time_ranges_sorted(tasks):
       combined_tasks_sections_and_time_ranges_sorted[task_id_str] = task['time_ranges']  
     else:
       combined_tasks_sections_and_time_ranges_sorted[task_id_str] = seq_insert_new_time_ranges_into_time_ranges(combined_tasks_sections_and_time_ranges_sorted[task_id_str], task['time_ranges'])  
-      # combined_tasks_sections_and_time_ranges_sorted[task_id_str] += task['time_ranges']  
 
   return combined_tasks_sections_and_time_ranges_sorted 
 
@@ -344,8 +358,8 @@ def get_allocatable_tasks_time_ranges(work_and_personal_time_ranges_rankings, wo
       last_end_time = time_ranges_group[min(task['time_length'], len(time_ranges_group)) - 1]['time_range'][1]
       last_end_time_minus_hour_min = datetime(last_end_time.year, last_end_time.month, last_end_time.day)
       td_diff = last_end_time_minus_hour_min - task['deadline']
-      # day_diff: int (0-14), lower means higher priority
-      day_diff = min(td_diff.days, 14)
+      # day_diff: int (-3-14), lower means higher priority
+      day_diff = max(min(td_diff.days, 14), -3)
 
       # time_length_diff: int (0-7), lower means higher priority
       time_length_diff = min(abs(len(time_ranges_group) - task['time_length']), 7)
@@ -364,7 +378,7 @@ def get_allocatable_tasks_time_ranges(work_and_personal_time_ranges_rankings, wo
       values_transformed = {
         'a': task['priority'] / 3,
         'b': (9 - task['time_length']) / 9,
-        'c': (15 - day_diff) / 15,
+        'c': get_day_diff_value_transformed(day_diff),
         'd': average_type_ranking / 100,
         'e': (8 - time_length_diff) / 8,
       }
@@ -451,7 +465,7 @@ def get_tasks_with_highest_relative_priority(id):
   parameters = {
     'a': 3,
     'b': 1,
-    'c': 3,
+    'c': 4,
     'd': 2,
     'e': 2
   }
@@ -475,9 +489,3 @@ def get_tasks_with_highest_relative_priority(id):
   # pprint(allocatable_tasks_time_ranges)
 
   return allocatable_tasks_time_ranges
-
-# TEST
-def test():
-  get_tasks_with_highest_relative_priority(4)
-
-test()
