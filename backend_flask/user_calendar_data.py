@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 load_dotenv()
 import os
 from datetime import datetime, timedelta
+from copy import deepcopy
 from pprint import pprint
 
 CLIENT_ID = os.getenv('CLIENT_ID')
@@ -57,9 +58,8 @@ def get_user_calendar_id_list(id):
 
 # helper function
 # returns a new list of new_events inserted into events in sequential order
-# pure function: does not modify the given parameters
 def seq_insert_new_events_into_events(events, new_events):
-  events_copy = events[:]
+  events_copy = [deepcopy(event) for event in events]
   for new_event in new_events:
     for i in range(len(events_copy)):
       if new_event['start']['dateTime'] < events_copy[i]['start']['dateTime']:

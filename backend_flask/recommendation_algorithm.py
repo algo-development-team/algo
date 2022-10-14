@@ -232,7 +232,7 @@ def multiply_parameters_and_values(parameters, values, keys):
 # return value specification:
 # task: { 'id': int, 'section': int (1-4), 'priority': int (1-3), 'deadline': datetime.datetime(year, month, day, hour, min), 'time_length': int (1, 2, 4, 8), 'time_ranges': datetime.datetime(year, month, day, hour, min)[] }[]
 # tasks already sorted in order of 'id' and 'section'
-def combined_sections(tasks):
+def combine_sections_time_length(tasks):
   combined_tasks = [deepcopy(task) for task in tasks]
 
   remaining_time_length = {}
@@ -252,6 +252,54 @@ def combined_sections(tasks):
       remaining_time_length[task_id_str] -= new_time_length
 
   return combined_tasks
+
+# helper function
+# returns a new list of new_time_ranges inserted into time_ranges in sequential order
+def seq_insert_new_time_ranges_into_time_ranges(time_ranges, new_time_ranges):
+  time_ranges_copy = time_ranges[:]
+  for new_time_range in new_time_ranges:
+    for i in range(len(time_ranges_copy)):
+      if new_time_range[0] < time_ranges_copy[i][0]:
+        time_ranges_copy.insert(i, new_time_range)
+        break
+  return time_ranges_copy
+
+# helper function
+# parameter specification:
+# task: { 'id': int, 'section': int (1-4), 'priority': int (1-3), 'deadline': datetime.datetime(year, month, day, hour, min), 'time_length': int (1, 2, 4, 8), 'time_ranges': datetime.datetime(year, month, day, hour, min)[] }[]
+# return value specfication:
+# { 'task_id_str': time_ranges[] (time_ranges sorted in sequential order) }
+def combine_tasks_sections_and_time_ranges_sorted(tasks):
+  combined_tasks_sections_and_time_ranges_sorted = {}
+  for task in tasks:
+    task_id_str = str(task['id'])
+    if task_id_str not in combined_tasks_sections_and_time_ranges_sorted:
+      combined_tasks_sections_and_time_ranges_sorted[task_id_str] = task['time_ranges']  
+    else:
+      # STOPPPED HERE
+      combined_tasks_sections_and_time_ranges_sorted[task_id_str] = seq_insert_new_time_ranges_into_time_ranges(combined_tasks_sections_and_time_ranges_sorted[task_id_str], task['time_ranges'])  
+  return combined_tasks_sections_and_time_ranges_sorted 
+
+# helper function
+# parameter specification:
+# { 'task_id_str': time_ranges[] (time_ranges sorted in sequential order) }
+# return value specfication:
+# { 'task_id_str': time_ranges[] (time_ranges sorted in sequential order) }
+def merge_tasks_time_ranges(tasks):
+  merged_tasks = {}
+  for task_id_str in tasks:
+    merged_time_ranges = []
+    for time_range in tasks[task_id_str]:
+      if len(merged_time_ranges) == 0:
+        merged_time_ranges.append(time_range)
+      else:
+        last_entry = merged_time_ranges[len(merged_time_ranges) - 1]
+        if time_range[0] == last_entry[1]:
+          merged_time_ranges[len(merged_time_ranges) - 1] = (last_entry[0], time_range[1])
+        else:
+          merged_time_ranges.append(time_range)
+    merged_tasks[task_id_str] = merged_time_ranges
+  return merged_tasks
 
 def get_tasks_with_highest_relative_priority(id):
   from models import User
@@ -375,11 +423,11 @@ def get_tasks_with_highest_relative_priority(id):
     
     task_index = task_with_max_relative_priority['task_index']
     num_time_ranges = task_with_max_relative_priority['num_time_ranges']
-    work_and_personal_tasks_transformed['personal'][task_index]['time_ranges'].extend(work_and_personal_time_ranges_rankings['personal'][i][:num_time_ranges])
+    work_and_personal_tasks_transformed['personal'][task_index]['time_ranges'].extend([time_range['time_range'] for time_range in work_and_personal_time_ranges_rankings['personal'][i][:num_time_ranges]])
     work_and_personal_tasks_transformed['personal'][task_index]['time_length'] -= num_time_ranges
     work_and_personal_time_ranges_rankings['personal'][i] = work_and_personal_time_ranges_rankings['personal'][i][num_time_ranges:]
 
-    work_and_personal_tasks_transformed['personal'] = combined_sections(work_and_personal_tasks_transformed['personal'])
+    work_and_personal_tasks_transformed['personal'] = combine_sections_time_length(work_and_personal_tasks_transformed['personal'])
 
     tasks_with_time_length_remaining = [task for task in work_and_personal_tasks_transformed['personal'] if task['time_length'] != 0]
     # if all the tasks have been allocated, break the loop
@@ -397,7 +445,15 @@ def get_tasks_with_highest_relative_priority(id):
   # DEBUG
   print('work_and_personal_tasks_transformed[\'personal\']:')
   pprint(work_and_personal_tasks_transformed['personal'])
-  # pprint([(task['id'], len(task['time_ranges'])) for task in work_and_personal_tasks_transformed['personal']])
+
+  # tasks_sections_combined_and_time_ranges_sorted data structure
+  # { 'task_id_str': time_ranges[] (time_ranges sorted in sequential order) }
+  tasks_sections_combined_and_time_ranges_sorted = combine_tasks_sections_and_time_ranges_sorted(work_and_personal_tasks_transformed['personal'])
+  tasks_time_ranges_merged = merge_tasks_time_ranges(tasks_sections_combined_and_time_ranges_sorted)
+
+  # DEBUG
+  print('tasks_time_ranges_merged:')
+  pprint(tasks_time_ranges_merged)
 
 # TEST
 def test():
