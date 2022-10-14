@@ -5,6 +5,7 @@ users = User.query.all()
 print('len(users): ' + str(len(users)))
 for user in users:
   print(str(user.id) + ': ' + user.__repr__())
+  print('checklist ' + str(user.id) + ': '  + str(user.checklist))
 
 # get all workspaces
 workspaces = Workspace.query.all()
