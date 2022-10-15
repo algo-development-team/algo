@@ -105,7 +105,8 @@ def get_user_events_time_range(id, time_min, time_max):
   events = []
   result = []
   calendar_id_list = get_user_calendar_id_list(id)
-  for calendar_id in calendar_id_list:
+  calendar_id_list_without_algo = [calendar_id for calendar_id in calendar_id_list if calendar_id != user.calendar_id]
+  for calendar_id in calendar_id_list_without_algo:
     events_result = service.events().list(calendarId=calendar_id, timeMin=time_min_str, timeMax=time_max_str, singleEvents=True, orderBy='startTime').execute()
     new_events = events_result['items']
     # only keep events that have both start and end time

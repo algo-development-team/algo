@@ -7,6 +7,7 @@ for user in users:
   print(str(user.id) + ': ' + user.__repr__())
   print('checklist ' + str(user.id) + ': '  + str(user.checklist))
   print('work_days ' + str(user.id) + ': '  + str(user.work_days))
+  print('calendar_id ' + str(user.id) + ': '  + str(user.calendar_id))
 
 # get all workspaces
 workspaces = Workspace.query.all()

@@ -24,6 +24,13 @@ class TimeLength(enum.Enum):
   FOUR_HOURS = 5
   EIGHT_HOURS = 6
 
+# enum numeric value equivalent to the work_type_index
+class WorkType(enum.Enum):
+  NONE = -1
+  URGENT = 0
+  DEEP = 1
+  SHALLOW = 2
+
 def get_workspace_type(workspace_type):
   if workspace_type == 'WORK':
     return WorkspaceType.WORK
@@ -62,6 +69,7 @@ class User(db.Model):
   sleep_time_range = db.Column(db.String(80), nullable=False, default=default_sleep_time_range)
   work_days = db.Column(ARRAY(db.Boolean), nullable=False, default=default_work_days)
   is_setup = db.Column(db.Boolean, nullable=False, default=False)
+  calendar_id = db.Column(db.String(160), unique=True, nullable=False)
 
   checklist = db.Column(ARRAY(db.Integer), nullable=False, default=[])
   
@@ -90,6 +98,7 @@ class User(db.Model):
       'sleep_time_range': self.sleep_time_range,
       'work_days': self.work_days,
       'is_setup': self.is_setup,
+      'calendar_id': self.calendar_id,
       'checklist': self.checklist,
       'urgent_rankings_ww': self.urgent_rankings_ww,
       'deep_rankings_ww': self.deep_rankings_ww,

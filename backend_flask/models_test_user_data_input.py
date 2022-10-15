@@ -29,5 +29,5 @@ if input_type == 2:
 if input_type == 3:
   print('Enter the work days: ex: 0,1,1,1,1,1,0')
   work_days = input()
-  user.work_days = [bool(int(work_day)) for work_day in work_days.split(',')]
+  user.work_days = [bool(int(work_day)) for work_day in work_days.split(',') if work_day != '']
   db.session.commit()

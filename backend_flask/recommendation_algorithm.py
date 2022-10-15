@@ -1,8 +1,11 @@
-from models import WorkspaceType, Priority, TimeLength
+from models import WorkspaceType, Priority, TimeLength, WorkType
 from user_calendar_data import get_work_and_personal_time_ranges, parse_user_time_range, end_time_round
 from datetime import datetime, timedelta
 from copy import deepcopy
 from pprint import pprint
+
+# constants
+DEFAULT_TASK_TYPE = WorkType.NONE
 
 # helper function
 def get_priority_value(PRIORITY):
@@ -158,7 +161,7 @@ def get_work_and_personal_time_ranges_rankings(
 # parameter specification:
 # tasks: Task[]
 # return value specification:
-# { 'id': int, 'section': int (1-4), 'priority': int (1-3), 'deadline': datetime.datetime(year, month, day, hour, min), 'time_length': int (1, 2, 4, 8), 'time_ranges': [] }[]
+# { 'id': int, 'section': int (1-4), 'priority': int (1-3), 'deadline': datetime.datetime(year, month, day, hour, min), 'time_length': int (1, 2, 4, 8), 'time_ranges': [] (later datetime.datetime(year, month, day, hour, min)[]), 'task_type': DEFAULT_TASK_TYPE (later WorkType) }[]
 def get_tasks_transformed(tasks):
   tasks_transformed = []
   for task in tasks:
@@ -173,28 +176,28 @@ def get_tasks_transformed(tasks):
         'deadline': task.deadline,
         'time_length': total_time_length - (i * 8) if total_time_length - (i * 8) < 8 else 8,
         'time_ranges': [],
+        'task_type': DEFAULT_TASK_TYPE,
       }
       tasks_transformed.append(task_transformed)
   return tasks_transformed
 
 # helper function
-# used only for testing
 # parameter specification:
 # task_type_index: int (1-3)
 # return value specification:
-# str ('urgent' or 'deep' or 'shallow')
+# WorkType
 def get_task_type(task_type_index):
   if task_type_index == 0:
-    return 'urgent'
+    return WorkType.URGENT
   elif task_type_index == 1:
-    return 'deep'
+    return WorkType.DEEP
   elif task_type_index == 2:
-    return 'shallow'
+    return WorkType.SHALLOW
 
 # helper function
 # parameter specification:
 # priority: int (1-3)
-# day_diff: int (-3-14)
+# day_diff: int (0-14)
 # time_length: int (1, 2, 4, 8)
 # return value specification:
 # int (1-3)
@@ -212,8 +215,8 @@ def get_task_type_index(priority, day_diff, time_length):
       return 1
   # urgent or deep by-default
   elif priority == 3:
-    # urgent (yesterday, today, tomorrow, day-after-tomorrow)
-    if -1 <= day_diff <= 2:
+    # urgent (today, tomorrow, day-after-tomorrow)
+    if day_diff <= 2:
       return 0
     # deep 
     else:
@@ -290,30 +293,66 @@ def seq_insert_new_time_ranges_into_time_ranges(time_ranges, new_time_ranges):
 
 # helper function
 # parameter specification:
-# task: { 'id': int, 'section': int (1-4), 'priority': int (1-3), 'deadline': datetime.datetime(year, month, day, hour, min), 'time_length': int (1, 2, 4, 8), 'time_ranges': datetime.datetime(year, month, day, hour, min)[] }[]
+# task_type1: WorkType
+# task_type2: WorkType
+# return value specification:
+# WorkType
+def determine_task_type(task_type1, task_type2):
+  def get_task_type_value(task_type):
+    if task_type == WorkType.URGENT:
+      return 3
+    elif task_type == WorkType.DEEP:
+      return 2
+    elif task_type == WorkType.SHALLOW:
+      return 1
+    elif task_type == WorkType.NONE:
+      return 0
+  def get_task_type_from_value(value):
+    if value == 3:
+      return WorkType.URGENT
+    elif value == 2:
+      return WorkType.DEEP
+    elif value == 1:
+      return WorkType.SHALLOW
+    elif value == 0:
+      return WorkType.NONE
+  task_type_higher_value = max(get_task_type_value(task_type1), get_task_type_value(task_type2))
+  task_type_higher = get_task_type_from_value(task_type_higher_value)
+  return task_type_higher
+
+# helper function
+# parameter specification:
+# task: { 'id': int, 'section': int (1-4), 'priority': int (1-3), 'deadline': datetime.datetime(year, month, day, hour, min), 'time_length': int (1, 2, 4, 8), 'time_ranges': datetime.datetime(year, month, day, hour, min)[], 'task_type': WorkType }[]
 # return value specfication:
-# { 'task_id_str': time_ranges[] (time_ranges sorted in sequential order) }
+# { 'task_id_str': { 'time_ranges': time_ranges[] (time_ranges sorted in sequential order), 'task_type': WorkType } }
 def combine_tasks_sections_and_time_ranges_sorted(tasks):
+  
   combined_tasks_sections_and_time_ranges_sorted = {}
   for task in tasks:
     task_id_str = str(task['id'])
     if task_id_str not in combined_tasks_sections_and_time_ranges_sorted:
-      combined_tasks_sections_and_time_ranges_sorted[task_id_str] = task['time_ranges']  
+      combined_tasks_sections_and_time_ranges_sorted[task_id_str] = { 
+        'time_ranges': task['time_ranges'],
+        'task_type': task['task_type']
+      }  
     else:
-      combined_tasks_sections_and_time_ranges_sorted[task_id_str] = seq_insert_new_time_ranges_into_time_ranges(combined_tasks_sections_and_time_ranges_sorted[task_id_str], task['time_ranges'])  
+      combined_tasks_sections_and_time_ranges_sorted[task_id_str] = { 
+        'time_ranges': seq_insert_new_time_ranges_into_time_ranges(combined_tasks_sections_and_time_ranges_sorted[task_id_str]['time_ranges'], task['time_ranges']),
+        'task_type': determine_task_type(combined_tasks_sections_and_time_ranges_sorted[task_id_str]['task_type'], task['task_type'])
+      }  
 
   return combined_tasks_sections_and_time_ranges_sorted 
 
 # helper function
 # parameter specification:
-# { 'task_id_str': time_ranges[] (time_ranges sorted in sequential order) }
+# { 'task_id_str': { 'time_ranges': time_ranges[] (time_ranges sorted in sequential order), 'task_type': WorkType } }
 # return value specfication:
-# { 'task_id_str': time_ranges[] (time_ranges sorted in sequential order) }
+# { 'task_id_str': { 'time_ranges': time_ranges[] (time_ranges sorted in sequential order), 'task_type': WorkType } }
 def merge_tasks_time_ranges(tasks):
   merged_tasks = {}
   for task_id_str in tasks:
     merged_time_ranges = []
-    for time_range in tasks[task_id_str]:
+    for time_range in tasks[task_id_str]['time_ranges']:
       if len(merged_time_ranges) == 0:
         merged_time_ranges.append(time_range)
       else:
@@ -322,7 +361,10 @@ def merge_tasks_time_ranges(tasks):
           merged_time_ranges[len(merged_time_ranges) - 1] = (last_entry[0], time_range[1])
         else:
           merged_time_ranges.append(time_range)
-    merged_tasks[task_id_str] = merged_time_ranges
+    merged_tasks[task_id_str] = {
+      'time_ranges': merged_time_ranges,
+      'task_type': tasks[task_id_str]['task_type']
+    }
   return merged_tasks
 
 # helper function
@@ -331,7 +373,7 @@ def merge_tasks_time_ranges(tasks):
 # time_ranges_groups: { 'time_range': (start_time, end_time), 'rankings': (urgent, deep, shallow) }[]
 # urgent, deep, shallow: 1-100
 # work_and_personal_tasks_transformed: { 'work': task[], 'personal': task[] }
-# task: { 'id': int, 'section': int (1-4), 'priority': int (1-3), 'deadline': datetime.datetime(year, month, day, hour, min), 'time_length': int (1, 2, 4, 8), 'time_ranges': [] }
+# task: { 'id': int, 'section': int (1-4), 'priority': int (1-3), 'deadline': datetime.datetime(year, month, day, hour, min), 'time_length': int (1, 2, 4, 8), 'time_ranges': [] (later datetime.datetime(year, month, day, hour, min)[]), 'task_type': DEFAULT_TASK_TYPE (later WorkType) }
 # return value specfication:
 # { 'task_id_str': time_ranges[] (time_ranges sorted in sequential order) }
 # can be empty if work_and_personal_tasks_transformed[workspace_type] == [] or work_and_personal_time_ranges_rankings[workspace_type] == []
@@ -347,7 +389,8 @@ def get_allocatable_tasks_time_ranges(work_and_personal_time_ranges_rankings, wo
     task_with_max_relative_priority = {
         'task_index': 0,
         'relative_priority': 0,
-        'num_time_ranges': 0
+        'num_time_ranges': 0,
+        'task_type': DEFAULT_TASK_TYPE,
       }
     first_task_with_max_relative_priority_set = False
     
@@ -392,20 +435,25 @@ def get_allocatable_tasks_time_ranges(work_and_personal_time_ranges_rankings, wo
       }
 
       task_relative_priority = multiply_parameters_and_values(parameters, values_transformed, ['a', 'b', 'c', 'd', 'e'])
+      task_type = get_task_type(task_type_index)
+
       # set the first_task_with_max_relative_priority_set 
       if not first_task_with_max_relative_priority_set:
         task_with_max_relative_priority['task_index'] = j
         task_with_max_relative_priority['relative_priority'] = task_relative_priority
         task_with_max_relative_priority['num_time_ranges'] = num_time_ranges
+        task_with_max_relative_priority['task_type'] = task_type
         first_task_with_max_relative_priority_set = True
       # update task_with_max_relative_priority with the task with currently highest relative priority
       elif task_with_max_relative_priority['relative_priority'] < task_relative_priority:
           task_with_max_relative_priority['task_index'] = j
           task_with_max_relative_priority['relative_priority'] = task_relative_priority
           task_with_max_relative_priority['num_time_ranges'] = num_time_ranges
+          task_with_max_relative_priority['task_type'] = task_type
     
     task_index = task_with_max_relative_priority['task_index']
     num_time_ranges = task_with_max_relative_priority['num_time_ranges']
+    task_type = task_with_max_relative_priority['task_type']
     
     # if no task has been selected for task_with_relative_priority, break the loop (there are no task); this is to prevent bugs in the statements below
     if not first_task_with_max_relative_priority_set:
@@ -413,6 +461,7 @@ def get_allocatable_tasks_time_ranges(work_and_personal_time_ranges_rankings, wo
     
     work_and_personal_tasks_transformed[workspace_type][task_index]['time_ranges'].extend([time_range['time_range'] for time_range in work_and_personal_time_ranges_rankings[workspace_type][i][:num_time_ranges]])
     work_and_personal_tasks_transformed[workspace_type][task_index]['time_length'] -= num_time_ranges
+    work_and_personal_tasks_transformed[workspace_type][task_index]['task_type'] = task_type
     work_and_personal_time_ranges_rankings[workspace_type][i] = work_and_personal_time_ranges_rankings[workspace_type][i][num_time_ranges:]
 
     work_and_personal_tasks_transformed[workspace_type] = combine_sections_time_length(work_and_personal_tasks_transformed[workspace_type])
@@ -491,9 +540,5 @@ def get_tasks_with_highest_relative_priority(id):
     'work': get_allocatable_tasks_time_ranges(work_and_personal_time_ranges_rankings, work_and_personal_tasks_transformed, 'work', parameters),
     'personal': get_allocatable_tasks_time_ranges(work_and_personal_time_ranges_rankings, work_and_personal_tasks_transformed, 'personal', parameters)
   }
-
-  # DEBUG
-  # print('allocatable_tasks_time_ranges:')
-  # pprint(allocatable_tasks_time_ranges)
 
   return allocatable_tasks_time_ranges

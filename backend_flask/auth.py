@@ -42,17 +42,35 @@ def create_tokens_handler():
     # {'id': str, 'email': str, 'verified_email': bool, 'name': str, 'given_name': str, 'family_name': str, 'picture': str (url), 'locale': str}
     session = flow.authorized_session()
     user_info = session.get('https://www.googleapis.com/userinfo/v2/me').json()
+    
+    # DEBUG
     print(user_info)
   
     user = User.query.filter_by(email=user_info['email']).first()
     if user is None:
-      user = User(name=user_info['name'], email=user_info['email'], picture=user_info['picture'], refresh_token=credentials.refresh_token)
+      creds = Credentials(token=None, refresh_token=credentials.refresh_token, token_uri=TOKEN_URI, client_id=CLIENT_ID, client_secret=CLIENT_SECRET)
+      service = build('calendar', 'v3', credentials=creds)
+      time_zone = service.settings().get(setting='timezone').execute()
+      calendar = {
+          'summary': 'Algo',
+          'timeZone': time_zone['value']
+      }
+      created_calendar = service.calendars().insert(body=calendar).execute()
+
+      # DEBUG
+      print(created_calendar['id'])
+
+      user = User(name=user_info['name'], email=user_info['email'], picture=user_info['picture'], refresh_token=credentials.refresh_token, calendar_id=created_calendar['id'])
       db.session.add(user)
       db.session.commit()
+      
+      # DEBUG
       print('User Created')
     else:
       user.refresh_token = credentials.refresh_token
       db.session.commit()
+      
+      # DEBUG
       print('User Refresh Token Updated')
 
   return 'Token Created'
@@ -78,6 +96,8 @@ def create_event_handler():
   creds = Credentials(token=None, refresh_token=REFRESH_TOKEN, token_uri=TOKEN_URI, client_id=CLIENT_ID, client_secret=CLIENT_SECRET)
   service = build('calendar', 'v3', credentials=creds)
   event = service.events().insert(calendarId='primary', body=event).execute()
+  
+  # DEBUG
   print(event.get('htmlLink'))
 
   return 'Create Event'

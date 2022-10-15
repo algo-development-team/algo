@@ -5,17 +5,20 @@ user_name1 = 'YOUR_NAME_HERE1'
 user_email1 = 'YOUR_EMAIL_HERE1'
 user_picture1 = 'YOUR_USER_PICTURE_HERE1'
 user_refresh_token1 = 'YOUR_REFRESH_TOKEN_HERE1'
-user1 = User(name=user_name1, email=user_email1, picture=user_picture1, refresh_token=user_refresh_token1)
+user_calendar_id1 = 'YOUR_CALENDAR_ID_HERE1'
+user1 = User(name=user_name1, email=user_email1, picture=user_picture1, refresh_token=user_refresh_token1, calendar_id=user_calendar_id1)
 user_name2 = 'YOUR_NAME_HERE2'
 user_email2 = 'YOUR_EMAIL_HERE2'
 user_picture2 = 'YOUR_USER_PICTURE_HERE2'
 user_refresh_token2 = 'YOUR_REFRESH_TOKEN_HERE2'
-user2 = User(name=user_name2, email=user_email2, picture=user_picture2, refresh_token=user_refresh_token2)
+user_calendar_id2 = 'YOUR_CALENDAR_ID_HERE2'
+user2 = User(name=user_name2, email=user_email2, picture=user_picture2, refresh_token=user_refresh_token2, calendar_id=user_calendar_id2)
 user_name3 = 'YOUR_NAME_HERE3'
 user_email3 = 'YOUR_EMAIL_HERE3'
 user_picture3 = 'YOUR_USER_PICTURE_HERE3'
 user_refresh_token3 = 'YOUR_REFRESH_TOKEN_HERE3'
-user3 = User(name=user_name3, email=user_email3, picture=user_picture3, refresh_token=user_refresh_token3)
+user_calendar_id3 = 'YOUR_CALENDAR_ID_HERE3'
+user3 = User(name=user_name3, email=user_email3, picture=user_picture3, refresh_token=user_refresh_token3, calendar_id=user_calendar_id3)
 
 workspace_name1 = 'Workspace 1'
 workspace_workspace_type1 = WorkspaceType.WORK
