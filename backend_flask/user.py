@@ -4,15 +4,12 @@ bp = Blueprint('/api/user', __name__, url_prefix='/api/user')
 
 # algorithm:
 # preferred type = 100
-# non-preferred, larger type = 60
-# non-preferred, smaller type = 60 - (non-preferred, larger - non-preferred, smaller)
+# non-preferred type = 1
 # example:
-# original 1: [90, 70, 30]
-# original 2: [55, 10, 70]
+# original: [90, 70, 30]
 # preferred type -> 2
-# updated 1: [60, 100, 1]
-# updated 2: [45, 100, 60]
-def get_rankings_3d_matrix(
+# updated: [1, 100, 1]
+def get_rankings_3d_matrix_extreme(
   rankings,
   rankings_ww_user_specified,
   rankings_pw_user_specified,
@@ -41,18 +38,8 @@ def get_rankings_3d_matrix(
 
         # rankings_3d_matrix value reassignment
         rankings_3d_matrix[i][ranking_type][j] = 100
-        
-        if type_rankings[0] > type_rankings[1]:
-          rankings_3d_matrix[i][type_rankings_indexes[0]][j] = 60
-          type_rankings_min_new_val_before_err_handling = 60 - (type_rankings[0] - type_rankings[1])
-          rankings_3d_matrix[i][type_rankings_indexes[1]][j] = type_rankings_min_new_val_before_err_handling if type_rankings_min_new_val_before_err_handling >= 1 else 1 
-        elif type_rankings[0] < type_rankings[1]:
-          rankings_3d_matrix[i][type_rankings_indexes[1]][j] = 60
-          type_rankings_min_new_val_before_err_handling = 60 - (type_rankings[1] - type_rankings[0])
-          rankings_3d_matrix[i][type_rankings_indexes[0]][j] = type_rankings_min_new_val_before_err_handling if type_rankings_min_new_val_before_err_handling >= 1 else 1 
-        else: 
-          rankings_3d_matrix[i][type_rankings_indexes[0]][j] = 60
-          rankings_3d_matrix[i][type_rankings_indexes[1]][j] = 60
+        rankings_3d_matrix[i][type_rankings_indexes[0]][j] = 1
+        rankings_3d_matrix[i][type_rankings_indexes[1]][j] = 1
   return rankings_3d_matrix
 
 @bp.route('/', methods=['GET'])
@@ -89,6 +76,8 @@ def update_user():
 
   return 'User Updated'
 
+# not used in the frontend yet
+# modify as needed to fit the future user rankings adjustment system implementation
 @bp.route('/update-rankings', methods=['PATCH'])
 def update_rankings_user():
   from app import db
@@ -105,7 +94,7 @@ def update_rankings_user():
     # passing by reference will prevent the fields being updated later on
     rankings = user.get_rankings()
 
-    rankings_3d_matrix = get_rankings_3d_matrix(
+    rankings_3d_matrix = get_rankings_3d_matrix_extreme(
       rankings=rankings,
       rankings_ww_user_specified=data['rankings_ww_user_specified'],
       rankings_pw_user_specified=data['rankings_pw_user_specified'],
