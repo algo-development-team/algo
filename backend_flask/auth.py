@@ -39,7 +39,7 @@ def create_tokens_handler():
   else:
     # get Google account information about the user
     # google session information format
-    # {'id': '100422666593539260584', 'email': 'techandy42@gmail.com', 'verified_email': True, 'name': 'Andy Lee', 'given_name': 'Andy', 'family_name': 'Lee', 'picture': 'https://lh3.googleusercontent.com/a/ALm5wu0SD8PToRp0Fhtimjkm0c0HxE9PGgCZTN8pKFEeXQ=s96-c', 'locale': 'en'}
+    # {'id': str, 'email': str, 'verified_email': bool, 'name': str, 'given_name': str, 'family_name': str, 'picture': str (url), 'locale': str}
     session = flow.authorized_session()
     user_info = session.get('https://www.googleapis.com/userinfo/v2/me').json()
     print(user_info)
