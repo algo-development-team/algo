@@ -13,3 +13,9 @@ print('runtime_calendar:')
 print(timedelta(seconds=runtimes['runtime_calendar']['seconds'], microseconds=runtimes['runtime_calendar']['microseconds']))
 print('runtime_total:')
 print(timedelta(seconds=runtimes['runtime_total']['seconds'], microseconds=runtimes['runtime_total']['microseconds']))
+
+# RUNTIME EFFICIENCY COMMENTS:
+
+# COMMENT 1:
+# after testing each type of request functions, all request functions have similar runtime
+# thus, reducing the number of requests is the best way to improve the runtime

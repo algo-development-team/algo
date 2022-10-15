@@ -152,7 +152,3 @@ def add_task_time_blocks_to_calendar(id):
     'runtime_calendar': { 'seconds': runtime_calendar.seconds, 'microseconds': runtime_calendar.microseconds },
     'runtime_total': { 'seconds': runtime_total.seconds, 'microseconds': runtime_total.microseconds },
   }
-
-# COMMENT
-# after testing each type of request functions, all request functions have similar runtime
-# thus, reducing the number of requests is the best way to improve the runtime
