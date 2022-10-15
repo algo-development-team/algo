@@ -227,16 +227,10 @@ def multiply_parameters_and_values(parameters, values, keys):
 
 # helper function
 # parameter specification:
-# day_diff: int (-3-14)
+# day_diff: int (0-14)
 # return value specification:
 # float (0-1)
 def get_day_diff_value_transformed(day_diff):
-  if day_diff == -1:
-    day_diff = 2
-  elif day_diff == -2:
-    day_diff = 7
-  elif day_diff == -3:
-    day_diff = 14
   day_diff_positive = 15 - day_diff
   if day_diff_positive == 15:
     day_diff_positive = 50
@@ -367,9 +361,13 @@ def get_allocatable_tasks_time_ranges(work_and_personal_time_ranges_rankings, wo
 
       last_end_time = time_ranges_group[min(task['time_length'], len(time_ranges_group)) - 1]['time_range'][1]
       last_end_time_minus_hour_min = datetime(last_end_time.year, last_end_time.month, last_end_time.day)
-      td_diff = last_end_time_minus_hour_min - task['deadline']
-      # day_diff: int (-3-14), lower means higher priority
-      day_diff = max(min(td_diff.days, 14), -3)
+      td_diff = task['deadline'] - last_end_time_minus_hour_min
+
+      if td_diff.days < 0:
+        continue
+
+      # day_diff: int (0-14), lower means higher priority
+      day_diff = min(td_diff.days, 14)
 
       # time_length_diff: int (0-7), lower means higher priority
       time_length_diff = min(abs(len(time_ranges_group) - task['time_length']), 7)
