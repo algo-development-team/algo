@@ -1,4 +1,4 @@
-from recommendation_algorithm import get_one_full_day, divide_time_ranges_into_fifteen_minute_groups, get_task_type_index, get_task_type, seq_insert_new_time_ranges_into_time_ranges
+from recommendation_algorithm import get_one_full_day, divide_time_ranges_into_fifteen_minute_groups, get_task_type_index, get_task_type
 from datetime import datetime
 from pprint import pprint
 
@@ -48,7 +48,6 @@ for priority in priorities:
           'time_length': time_length
         })
 
-combined_time_ranges_group = seq_insert_new_time_ranges_into_time_ranges(time_ranges_group1, time_ranges_group2)
 
 sep()
 print('Tested Functions:')
@@ -72,8 +71,4 @@ sep()
 # print('Get Task Type Index:')
 # for task_type in task_types:
 #   pprint(task_type)
-sep()
-sep()
-print('Seq Insert New Time Ranges Into Time Ranges:')
-pprint(combined_time_ranges_group)
 sep()

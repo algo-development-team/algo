@@ -276,22 +276,6 @@ def combine_sections_time_length(tasks):
   return combined_tasks
 
 # helper function
-# returns a new list of new_time_ranges inserted into time_ranges in sequential order
-def seq_insert_new_time_ranges_into_time_ranges(time_ranges, new_time_ranges):
-  time_ranges_copy = time_ranges[:]
-  for new_time_range in new_time_ranges:
-    inserted = False
-    for i in range(len(time_ranges_copy)):
-      if new_time_range[0] < time_ranges_copy[i][0]:
-        time_ranges_copy.insert(i, new_time_range)
-        inserted = True
-        break
-    if not inserted:
-      time_ranges_copy.append(new_time_range)
-
-  return time_ranges_copy
-
-# helper function
 # parameter specification:
 # task_type1: TaskType
 # task_type2: TaskType
@@ -336,10 +320,11 @@ def combine_tasks_sections_and_time_ranges_sorted(tasks):
         'task_type': task['task_type']
       }  
     else:
-      combined_tasks_sections_and_time_ranges_sorted[task_id_str] = { 
-        'time_ranges': seq_insert_new_time_ranges_into_time_ranges(combined_tasks_sections_and_time_ranges_sorted[task_id_str]['time_ranges'], task['time_ranges']),
-        'task_type': determine_task_type(combined_tasks_sections_and_time_ranges_sorted[task_id_str]['task_type'], task['task_type'])
-      }  
+      combined_tasks_sections_and_time_ranges_sorted[task_id_str]['time_ranges'] += task['time_ranges']
+      combined_tasks_sections_and_time_ranges_sorted[task_id_str]['task_type'] = determine_task_type(combined_tasks_sections_and_time_ranges_sorted[task_id_str]['task_type'], task['task_type'])
+
+  for task_id_str in combined_tasks_sections_and_time_ranges_sorted:
+    combined_tasks_sections_and_time_ranges_sorted[task_id_str]['time_ranges'] = sorted(combined_tasks_sections_and_time_ranges_sorted[task_id_str]['time_ranges'], key=lambda time_range: time_range[0])
 
   return combined_tasks_sections_and_time_ranges_sorted 
 

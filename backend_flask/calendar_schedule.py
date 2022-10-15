@@ -4,7 +4,7 @@ from models import Task, User, TaskType
 from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
 import os
-from datetime import datetime, timedelta
+from datetime import datetime
 from pprint import pprint
 
 CLIENT_ID = os.getenv('CLIENT_ID')
@@ -83,8 +83,25 @@ def get_allocated_events(id, first_time, last_time):
   allocated_events = get_user_events_time_range(id, first_time, last_time, algo=True, include_event_ids=True, mark_edge_events=True)
   return allocated_events
 
-def add_task_time_blocks_to_calendar(id, calendar_id, refresh_token, time_zone):
+def add_task_time_blocks_to_calendar(id):
+  
+  dt_total1 = datetime.now() # DEBUG
+
+  user = User.query.get(id)
+  calendar_id = user.calendar_id
+  refresh_token = user.refresh_token
+
+  creds = Credentials(token=None, refresh_token=refresh_token, token_uri=TOKEN_URI, client_id=CLIENT_ID, client_secret=CLIENT_SECRET)
+  service = build('calendar', 'v3', credentials=creds)
+  time_zone = service.settings().get(setting='timezone').execute()
+  time_zone = time_zone['value']
+
+  dt1 = datetime.now() # DEBUG
+  
   allocatable_tasks_time_ranges = get_tasks_with_highest_relative_priority(id)
+  
+  dt2 = datetime.now() # DEBUG
+  runtime_algorithm = dt2 - dt1 # DEBUG
 
   # DEBUG
   # print('allocatable_tasks_time_ranges:')
@@ -92,9 +109,6 @@ def add_task_time_blocks_to_calendar(id, calendar_id, refresh_token, time_zone):
 
   (first_time, last_time) = get_first_time_and_last_time(allocatable_tasks_time_ranges)
 
-  # allocated_events data structure
-  # [(start_time, end_time, event_id, is_edge_event),...]
-  # is_edge_event: int (0-2) (0 for false, 1 for start edge event, 2 for end edge event)
   allocated_events = get_allocated_events(id, first_time, last_time)
 
   # DEBUG
@@ -105,42 +119,40 @@ def add_task_time_blocks_to_calendar(id, calendar_id, refresh_token, time_zone):
   events.extend(get_events(allocatable_tasks_time_ranges['work'], time_zone))
   events.extend(get_events(allocatable_tasks_time_ranges['personal'], time_zone))
 
+  dt3 = datetime.now() # DEBUG
+
   # DEBUG
   # print('events:')
   # pprint(events)
-
-  creds = Credentials(token=None, refresh_token=refresh_token, token_uri=TOKEN_URI, client_id=CLIENT_ID, client_secret=CLIENT_SECRET)
-  service = build('calendar', 'v3', credentials=creds)
 
   for allocated_event in allocated_events:
     if allocated_event[3] == 1:
       original_event = service.events().get(calendarId=calendar_id, eventId=allocated_event[2]).execute()
       original_event['end']['dateTime'] = first_time.strftime('%Y-%m-%dT%H:%M:%S')
       updated_event = service.events().update(calendarId=calendar_id, eventId=original_event['id'], body=original_event).execute()
-      # DEBUG
-      # print('updated_event:')
-      # pprint(updated_event)         
     elif allocated_event[3] == 2:
       original_event = service.events().get(calendarId=calendar_id, eventId=allocated_event[2]).execute()
       original_event['start']['dateTime'] = last_time.strftime('%Y-%m-%dT%H:%M:%S')
       updated_event = service.events().update(calendarId=calendar_id, eventId=original_event['id'], body=original_event).execute()
-      # DEBUG
-      # print('updated_event:')
-      # pprint(updated_event)         
     else:
       service.events().delete(calendarId=calendar_id, eventId=allocated_event[2]).execute()
-      # DEBUG
-      # print('deleted event: ' + allocated_event[2])
 
   for event in events:
     created_event = service.events().insert(calendarId=calendar_id, body=event).execute()
-    # DEBUG
-    # print('created_event:')
-    # pprint(created_event)         
 
-# TEST 
-def test():
-  user = User.query.get(4)
-  add_task_time_blocks_to_calendar(user.id, user.calendar_id, user.refresh_token, 'America/Winnipeg')
+  dt4 = datetime.now() # DEBUG
+  runtime_calendar = dt4 - dt3 # DEBUG
 
-test()
+  dt_total2 = datetime.now() # DEBUG
+  runtime_total = dt_total2 - dt_total1 # DEBUG
+
+  # DEBUG
+  return {
+    'runtime_algorithm': { 'seconds': runtime_algorithm.seconds, 'microseconds': runtime_algorithm.microseconds },
+    'runtime_calendar': { 'seconds': runtime_calendar.seconds, 'microseconds': runtime_calendar.microseconds },
+    'runtime_total': { 'seconds': runtime_total.seconds, 'microseconds': runtime_total.microseconds },
+  }
+
+# COMMENT
+# after testing each type of request functions, all request functions have similar runtime
+# thus, reducing the number of requests is the best way to improve the runtime

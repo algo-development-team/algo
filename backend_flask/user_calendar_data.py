@@ -57,22 +57,6 @@ def get_user_calendar_id_list(id):
   return calendar_id_list
 
 # helper function
-# returns a new list of new_events inserted into events in sequential order
-def seq_insert_new_events_into_events(events, new_events):
-  events_copy = [deepcopy(event) for event in events]
-  for new_event in new_events:
-    inserted = False
-    for i in range(len(events_copy)):
-      if new_event['start']['dateTime'] < events_copy[i]['start']['dateTime']:
-        events_copy.insert(i, new_event)
-        inserted = True
-        break
-    if not inserted:
-      events_copy.append(new_event)
-
-  return events_copy
-
-# helper function
 # parameter specification:
 # dt: datetime.datetime(year, month, day, hour, min, tzinfo)
 # user_zone_info: ZoneInfo object
@@ -121,7 +105,9 @@ def get_user_events_time_range(id, time_min, time_max, algo=False, include_event
     if len(events) == 0:
       events = new_events_with_time_range
     else:  
-      events = seq_insert_new_events_into_events(events, new_events_with_time_range)
+      events += new_events_with_time_range
+
+  events = sorted(events, key=lambda event: event['start']['dateTime'])
 
   user_time_zone = get_user_time_zone(id)
   user_zone_info = ZoneInfo(user_time_zone)
@@ -138,7 +124,6 @@ def get_user_events_time_range(id, time_min, time_max, algo=False, include_event
       adjust_timezone_and_remove_tzinfo(datetime.strptime(event['start']['dateTime'], '%Y-%m-%dT%H:%M:%S%z'), user_zone_info),
       adjust_timezone_and_remove_tzinfo(datetime.strptime(event['end']['dateTime'], '%Y-%m-%dT%H:%M:%S%z'), user_zone_info)
     ) for event in events]
-
 
   # eliminate time ranges that are in the buffer time, where the cut off for events at the edge are at time_min and time_max
   events_time_range_remove_buffer = []
