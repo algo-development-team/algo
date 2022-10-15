@@ -87,13 +87,16 @@ def adjust_timezone_and_remove_tzinfo(dt, user_zone_info):
 # time_min_str (inside the function, not a parameter): 'YYYY-MM-DDTHH:MM:SSZ'
 # time_max_str (inside the function, not a parameter): 'YYYY-MM-DDTHH:MM:SSZ'
 # time_min < time_max
+# algo: bool
 # return value specification:
-# [(start_time, end_time), (start_time, end_time), ...]
+# [(start_time, end_time, event_id (optional), is_edge_event (optional)),...]
 # start_time_str (inside the function): 'YYYY-MM-DDTHH:MM:SS-HH:MM'
 # end_time_str (inside the function): 'YYYY-MM-DDTHH:MM:SSZ-HH:MM'
-# start_time: datetime.datetime(year, month, day, hour, min)
-# end_time: datetime.datetime(year, month, day, hour, min)
-def get_user_events_time_range(id, time_min, time_max):
+# start_time: datetime.datetime(year, month, day, hour, min) (rounded up to nearest 15 minutes)
+# end_time: datetime.datetime(year, month, day, hour, min) (rounded down to nearest 15 minutes)
+# event_id: str (valid event id)
+# is_edge_event: int (0-2) (0 for false, 1 for start edge event, 2 for end edge event)
+def get_user_events_time_range(id, time_min, time_max, algo=False, include_event_ids=False, mark_edge_events=False):
   user = User.query.get(id)
   creds = Credentials(token=None, refresh_token=user.refresh_token, token_uri=TOKEN_URI, client_id=CLIENT_ID, client_secret=CLIENT_SECRET)
   service = build('calendar', 'v3', credentials=creds)
@@ -104,9 +107,13 @@ def get_user_events_time_range(id, time_min, time_max):
   time_max_str = time_max_with_buffer.strftime('%Y-%m-%dT%H:%M:00Z')
   events = []
   result = []
-  calendar_id_list = get_user_calendar_id_list(id)
-  calendar_id_list_without_algo = [calendar_id for calendar_id in calendar_id_list if calendar_id != user.calendar_id]
-  for calendar_id in calendar_id_list_without_algo:
+  calendar_id_list = []
+  if algo:
+    calendar_id_list.append(user.calendar_id)
+  else:
+    calendar_id_list = get_user_calendar_id_list(id)
+    calendar_id_list = [calendar_id for calendar_id in calendar_id_list if calendar_id != user.calendar_id]
+  for calendar_id in calendar_id_list:
     events_result = service.events().list(calendarId=calendar_id, timeMin=time_min_str, timeMax=time_max_str, singleEvents=True, orderBy='startTime').execute()
     new_events = events_result['items']
     # only keep events that have both start and end time
@@ -114,26 +121,47 @@ def get_user_events_time_range(id, time_min, time_max):
     if len(events) == 0:
       events = new_events_with_time_range
     else:  
-      result = seq_insert_new_events_into_events(events, new_events_with_time_range)
-      events = result
+      events = seq_insert_new_events_into_events(events, new_events_with_time_range)
 
   user_time_zone = get_user_time_zone(id)
   user_zone_info = ZoneInfo(user_time_zone)
 
-  events_time_range = [(
-    adjust_timezone_and_remove_tzinfo(datetime.strptime(event['start']['dateTime'], '%Y-%m-%dT%H:%M:%S%z'), user_zone_info),
-    adjust_timezone_and_remove_tzinfo(datetime.strptime(event['end']['dateTime'], '%Y-%m-%dT%H:%M:%S%z'), user_zone_info),
-  ) for event in events]
+  events_time_range = []
+  if include_event_ids:
+    events_time_range = [(
+      adjust_timezone_and_remove_tzinfo(datetime.strptime(event['start']['dateTime'], '%Y-%m-%dT%H:%M:%S%z'), user_zone_info),
+      adjust_timezone_and_remove_tzinfo(datetime.strptime(event['end']['dateTime'], '%Y-%m-%dT%H:%M:%S%z'), user_zone_info),
+      event['id']
+    ) for event in events]
+  else:
+    events_time_range = [(
+      adjust_timezone_and_remove_tzinfo(datetime.strptime(event['start']['dateTime'], '%Y-%m-%dT%H:%M:%S%z'), user_zone_info),
+      adjust_timezone_and_remove_tzinfo(datetime.strptime(event['end']['dateTime'], '%Y-%m-%dT%H:%M:%S%z'), user_zone_info)
+    ) for event in events]
+
 
   # eliminate time ranges that are in the buffer time, where the cut off for events at the edge are at time_min and time_max
   events_time_range_remove_buffer = []
   for event_time_range in events_time_range:
     if event_time_range[0] >= time_min and event_time_range[1] <= time_max:
-      events_time_range_remove_buffer.append(event_time_range)
+      event_time_range_info = list(event_time_range) 
+      if mark_edge_events:
+        event_time_range_info.append(0)
+      events_time_range_remove_buffer.append(tuple(event_time_range_info))
     elif event_time_range[0] <= time_min < event_time_range[1]:
-      events_time_range_remove_buffer.append((time_min, event_time_range[1]))
+      events_time_range_info = [time_min, event_time_range[1]]
+      if include_event_ids:
+        events_time_range_info.append(event_time_range[2])
+      if mark_edge_events:
+        events_time_range_info.append(1)
+      events_time_range_remove_buffer.append(tuple(events_time_range_info))
     elif event_time_range[0] < time_max <= event_time_range[1]:
-      events_time_range_remove_buffer.append((event_time_range[0], time_max))
+      events_time_range_info = [event_time_range[0], time_max]
+      if include_event_ids:
+        events_time_range_info.append(event_time_range[2])
+      if mark_edge_events:
+        events_time_range_info.append(2)
+      events_time_range_remove_buffer.append(tuple(events_time_range_info))
 
   return events_time_range_remove_buffer
 
@@ -174,7 +202,7 @@ def get_dt_fifteen_min_rounded(time_ranges):
 # start_time: datetime.datetime(year, month, day, hour, min), min rounded to 15 min
 # end_time: datetime.datetime(year, month, day, hour, min), min rounded to 15 min
 def get_empty_time_ranges(id, time_min, time_max):
-  time_ranges = get_dt_fifteen_min_rounded(get_user_events_time_range(id, time_min, time_max))
+  time_ranges = get_dt_fifteen_min_rounded(get_user_events_time_range(id, time_min, time_max, algo=False, include_event_ids=False, mark_edge_events=False))
   time_ranges_detupled = [time_min]
   for time_range in time_ranges:
     time_ranges_detupled.append(time_range[0])

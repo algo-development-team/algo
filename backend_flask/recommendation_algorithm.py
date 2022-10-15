@@ -185,14 +185,14 @@ def get_tasks_transformed(tasks):
 # parameter specification:
 # task_type_index: int (1-3)
 # return value specification:
-# TaskType
-def get_task_type(task_type_index):
-  if task_type_index == 0:
-    return TaskType.URGENT
-  elif task_type_index == 1:
-    return TaskType.DEEP
-  elif task_type_index == 2:
-    return TaskType.SHALLOW
+# int (0-2)
+def get_task_type_index(task_type):
+  if task_type == TaskType.URGENT:
+    return 0
+  elif task_type == TaskType.DEEP:
+    return 1
+  elif task_type == TaskType.SHALLOW:
+    return 2
 
 # helper function
 # parameter specification:
@@ -200,27 +200,27 @@ def get_task_type(task_type_index):
 # day_diff: int (0-14)
 # time_length: int (1, 2, 4, 8)
 # return value specification:
-# int (1-3)
-def get_task_type_index(priority, day_diff, time_length):
+# TaskType
+def get_task_type(priority, day_diff, time_length):
   # shallow by-default
   if priority == 1:
-    return 2
+    return TaskType.SHALLOW
   # deep or shallow
   elif priority == 2:
     # shallow (15 min or 30 min)
     if time_length <= 2:
-      return 2
+      return TaskType.SHALLOW
     # deep (1 hour or longer)
     else:
-      return 1
+      return TaskType.DEEP
   # urgent or deep by-default
   elif priority == 3:
     # urgent (today, tomorrow, day-after-tomorrow)
     if day_diff <= 2:
-      return 0
+      return TaskType.URGENT
     # deep 
     else:
-      return 1
+      return TaskType.DEEP
 
 def multiply_parameters_and_values(parameters, values, keys):
   total = 0
@@ -415,7 +415,8 @@ def get_allocatable_tasks_time_ranges(work_and_personal_time_ranges_rankings, wo
       # time_length_diff: int (0-7), lower means higher priority
       time_length_diff = min(abs(len(time_ranges_group) - task['time_length']), 7)
 
-      task_type_index = get_task_type_index(task['priority'], day_diff, task['time_length'])
+      task_type = get_task_type(task['priority'], day_diff, task['time_length'])
+      task_type_index = get_task_type_index(task_type)
       
       # num_time_ranges: int (1-8), specifies how many 15 min time ranges the task will be allocated into        
       num_time_ranges = min(task['time_length'], len(time_ranges_group))
@@ -435,7 +436,6 @@ def get_allocatable_tasks_time_ranges(work_and_personal_time_ranges_rankings, wo
       }
 
       task_relative_priority = multiply_parameters_and_values(parameters, values_transformed, ['a', 'b', 'c', 'd', 'e'])
-      task_type = get_task_type(task_type_index)
 
       # set the first_task_with_max_relative_priority_set 
       if not first_task_with_max_relative_priority_set:
@@ -485,7 +485,7 @@ def get_allocatable_tasks_time_ranges(work_and_personal_time_ranges_rankings, wo
 # id: int (valid User id)
 # return value specification:
 # { 'work': allocatable_tasks_time_ranges, 'personal': allocatable_tasks_time_ranges }
-# allocatable_tasks_time_ranges: { 'task_id_str': time_ranges[] (time_ranges sorted in sequential order) }
+# allocatable_tasks_time_ranges: { 'task_id_str': { 'time_ranges:' time_ranges[] (time_ranges sorted in sequential order), 'task_type': TaskType } }
 # allocatable_tasks_time_ranges: can be empty if work_and_personal_tasks_transformed[workspace_type] == [] or work_and_personal_time_ranges_rankings[workspace_type] == []
 def get_tasks_with_highest_relative_priority(id):
   from models import User
