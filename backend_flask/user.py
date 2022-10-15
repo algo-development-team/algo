@@ -78,7 +78,7 @@ def update_user():
 
 # not used in the frontend yet
 # modify as needed to fit the future user rankings adjustment system implementation
-@bp.route('/update-rankings', methods=['PATCH'])
+@bp.route('/update-rankings-development', methods=['PATCH'])
 def update_rankings_user():
   from app import db
   from models import User
