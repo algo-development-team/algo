@@ -1,11 +1,11 @@
-from models import WorkspaceType, Priority, TimeLength, WorkType
+from models import WorkspaceType, Priority, TimeLength, TaskType
 from user_calendar_data import get_work_and_personal_time_ranges, parse_user_time_range, end_time_round
 from datetime import datetime, timedelta
 from copy import deepcopy
 from pprint import pprint
 
 # constants
-DEFAULT_TASK_TYPE = WorkType.NONE
+DEFAULT_TASK_TYPE = TaskType.NONE
 
 # helper function
 def get_priority_value(PRIORITY):
@@ -161,7 +161,7 @@ def get_work_and_personal_time_ranges_rankings(
 # parameter specification:
 # tasks: Task[]
 # return value specification:
-# { 'id': int, 'section': int (1-4), 'priority': int (1-3), 'deadline': datetime.datetime(year, month, day, hour, min), 'time_length': int (1, 2, 4, 8), 'time_ranges': [] (later datetime.datetime(year, month, day, hour, min)[]), 'task_type': DEFAULT_TASK_TYPE (later WorkType) }[]
+# { 'id': int, 'section': int (1-4), 'priority': int (1-3), 'deadline': datetime.datetime(year, month, day, hour, min), 'time_length': int (1, 2, 4, 8), 'time_ranges': [] (later datetime.datetime(year, month, day, hour, min)[]), 'task_type': DEFAULT_TASK_TYPE (later TaskType) }[]
 def get_tasks_transformed(tasks):
   tasks_transformed = []
   for task in tasks:
@@ -185,14 +185,14 @@ def get_tasks_transformed(tasks):
 # parameter specification:
 # task_type_index: int (1-3)
 # return value specification:
-# WorkType
+# TaskType
 def get_task_type(task_type_index):
   if task_type_index == 0:
-    return WorkType.URGENT
+    return TaskType.URGENT
   elif task_type_index == 1:
-    return WorkType.DEEP
+    return TaskType.DEEP
   elif task_type_index == 2:
-    return WorkType.SHALLOW
+    return TaskType.SHALLOW
 
 # helper function
 # parameter specification:
@@ -293,38 +293,38 @@ def seq_insert_new_time_ranges_into_time_ranges(time_ranges, new_time_ranges):
 
 # helper function
 # parameter specification:
-# task_type1: WorkType
-# task_type2: WorkType
+# task_type1: TaskType
+# task_type2: TaskType
 # return value specification:
-# WorkType
+# TaskType
 def determine_task_type(task_type1, task_type2):
   def get_task_type_value(task_type):
-    if task_type == WorkType.URGENT:
+    if task_type == TaskType.URGENT:
       return 3
-    elif task_type == WorkType.DEEP:
+    elif task_type == TaskType.DEEP:
       return 2
-    elif task_type == WorkType.SHALLOW:
+    elif task_type == TaskType.SHALLOW:
       return 1
-    elif task_type == WorkType.NONE:
+    elif task_type == TaskType.NONE:
       return 0
   def get_task_type_from_value(value):
     if value == 3:
-      return WorkType.URGENT
+      return TaskType.URGENT
     elif value == 2:
-      return WorkType.DEEP
+      return TaskType.DEEP
     elif value == 1:
-      return WorkType.SHALLOW
+      return TaskType.SHALLOW
     elif value == 0:
-      return WorkType.NONE
+      return TaskType.NONE
   task_type_higher_value = max(get_task_type_value(task_type1), get_task_type_value(task_type2))
   task_type_higher = get_task_type_from_value(task_type_higher_value)
   return task_type_higher
 
 # helper function
 # parameter specification:
-# task: { 'id': int, 'section': int (1-4), 'priority': int (1-3), 'deadline': datetime.datetime(year, month, day, hour, min), 'time_length': int (1, 2, 4, 8), 'time_ranges': datetime.datetime(year, month, day, hour, min)[], 'task_type': WorkType }[]
+# task: { 'id': int, 'section': int (1-4), 'priority': int (1-3), 'deadline': datetime.datetime(year, month, day, hour, min), 'time_length': int (1, 2, 4, 8), 'time_ranges': datetime.datetime(year, month, day, hour, min)[], 'task_type': TaskType }[]
 # return value specfication:
-# { 'task_id_str': { 'time_ranges': time_ranges[] (time_ranges sorted in sequential order), 'task_type': WorkType } }
+# { 'task_id_str': { 'time_ranges': time_ranges[] (time_ranges sorted in sequential order), 'task_type': TaskType } }
 def combine_tasks_sections_and_time_ranges_sorted(tasks):
   
   combined_tasks_sections_and_time_ranges_sorted = {}
@@ -345,9 +345,9 @@ def combine_tasks_sections_and_time_ranges_sorted(tasks):
 
 # helper function
 # parameter specification:
-# { 'task_id_str': { 'time_ranges': time_ranges[] (time_ranges sorted in sequential order), 'task_type': WorkType } }
+# { 'task_id_str': { 'time_ranges': time_ranges[] (time_ranges sorted in sequential order), 'task_type': TaskType } }
 # return value specfication:
-# { 'task_id_str': { 'time_ranges': time_ranges[] (time_ranges sorted in sequential order), 'task_type': WorkType } }
+# { 'task_id_str': { 'time_ranges': time_ranges[] (time_ranges sorted in sequential order), 'task_type': TaskType } }
 def merge_tasks_time_ranges(tasks):
   merged_tasks = {}
   for task_id_str in tasks:
@@ -373,7 +373,7 @@ def merge_tasks_time_ranges(tasks):
 # time_ranges_groups: { 'time_range': (start_time, end_time), 'rankings': (urgent, deep, shallow) }[]
 # urgent, deep, shallow: 1-100
 # work_and_personal_tasks_transformed: { 'work': task[], 'personal': task[] }
-# task: { 'id': int, 'section': int (1-4), 'priority': int (1-3), 'deadline': datetime.datetime(year, month, day, hour, min), 'time_length': int (1, 2, 4, 8), 'time_ranges': [] (later datetime.datetime(year, month, day, hour, min)[]), 'task_type': DEFAULT_TASK_TYPE (later WorkType) }
+# task: { 'id': int, 'section': int (1-4), 'priority': int (1-3), 'deadline': datetime.datetime(year, month, day, hour, min), 'time_length': int (1, 2, 4, 8), 'time_ranges': [] (later datetime.datetime(year, month, day, hour, min)[]), 'task_type': DEFAULT_TASK_TYPE (later TaskType) }
 # return value specfication:
 # { 'task_id_str': time_ranges[] (time_ranges sorted in sequential order) }
 # can be empty if work_and_personal_tasks_transformed[workspace_type] == [] or work_and_personal_time_ranges_rankings[workspace_type] == []

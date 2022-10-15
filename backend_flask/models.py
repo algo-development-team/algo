@@ -25,7 +25,7 @@ class TimeLength(enum.Enum):
   EIGHT_HOURS = 6
 
 # enum numeric value equivalent to the work_type_index
-class WorkType(enum.Enum):
+class TaskType(enum.Enum):
   NONE = -1
   URGENT = 0
   DEEP = 1
