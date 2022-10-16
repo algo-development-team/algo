@@ -8,6 +8,7 @@ import auth
 import workspace
 import category
 import task
+import schedule
 from dotenv import load_dotenv
 load_dotenv()
 import os
@@ -30,6 +31,7 @@ app.register_blueprint(user.bp)
 app.register_blueprint(workspace.bp)
 app.register_blueprint(category.bp)
 app.register_blueprint(task.bp)
+app.register_blueprint(schedule.bp)
 
 @app.route('/')
 def hello_world():
