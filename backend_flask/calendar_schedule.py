@@ -1,6 +1,7 @@
 from recommendation_algorithm import get_tasks_with_highest_relative_priority
 from user_calendar_data import get_user_events_time_range
 from models import Task, User, TaskType
+from app import db
 from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
 import os
@@ -98,12 +99,30 @@ def add_task_time_blocks_to_calendar_and_add_task_ids_to_checklist(id):
   runtime_algorithm = dt2 - dt1 # DEBUG
 
   # DEBUG
-  # print('allocatable_tasks_time_ranges:')
-  # pprint(allocatable_tasks_time_ranges)
+  print('allocatable_tasks_time_ranges:')
+  pprint(allocatable_tasks_time_ranges)
+
+  task_ids_and_first_time = []
+  for task_id_str in allocatable_tasks_time_ranges['work']:
+    if len(allocatable_tasks_time_ranges['work'][task_id_str]['time_ranges']) >= 1:
+      task_ids_and_first_time.append({ 'id': int(task_id_str), 'first_time': allocatable_tasks_time_ranges['work'][task_id_str]['time_ranges'][0][0] })
+  for task_id_str in allocatable_tasks_time_ranges['personal']:
+    if len(allocatable_tasks_time_ranges['personal'][task_id_str]['time_ranges']) >= 1:
+      task_ids_and_first_time.append({ 'id': int(task_id_str), 'first_time': allocatable_tasks_time_ranges['personal'][task_id_str]['time_ranges'][0][0] })
+  task_ids_and_first_time = sorted(task_ids_and_first_time, key=lambda task_id_and_first_time: task_id_and_first_time['first_time'])
+  new_checklist = [task_id_and_first_time['id'] for task_id_and_first_time in task_ids_and_first_time]
+
+  # DEBUG
+  # print('new_checklist:')
+  # pprint(new_checklist)
+
+  user.checklist = new_checklist
+  db.session.commit()
 
   (first_time, last_time) = get_first_time_and_last_time(allocatable_tasks_time_ranges)
 
   allocated_events = get_user_events_time_range(id, first_time, last_time, algo=True, include_event_ids=True, mark_edge_events=True)
+
 
   # DEBUG
   # print('allocated_events')

@@ -106,7 +106,6 @@ def get_user_events_time_range(id, time_min, time_max, algo=False, include_event
       events = new_events_with_time_range
     else:  
       events += new_events_with_time_range
-
   events = sorted(events, key=lambda event: event['start']['dateTime'])
 
   user_time_zone = get_user_time_zone(id)
