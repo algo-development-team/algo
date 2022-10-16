@@ -78,13 +78,7 @@ def get_first_time_and_last_time(allocatable_tasks_time_ranges):
 
   return (first_time, last_time)
 
-# helper function
-def get_allocated_events(id, first_time, last_time):
-  allocated_events = get_user_events_time_range(id, first_time, last_time, algo=True, include_event_ids=True, mark_edge_events=True)
-  return allocated_events
-
-def add_task_time_blocks_to_calendar(id):
-  
+def add_task_time_blocks_to_calendar_and_add_task_ids_to_checklist(id):
   dt_total1 = datetime.now() # DEBUG
 
   user = User.query.get(id)
@@ -109,16 +103,18 @@ def add_task_time_blocks_to_calendar(id):
 
   (first_time, last_time) = get_first_time_and_last_time(allocatable_tasks_time_ranges)
 
-  allocated_events = get_allocated_events(id, first_time, last_time)
+  allocated_events = get_user_events_time_range(id, first_time, last_time, algo=True, include_event_ids=True, mark_edge_events=True)
 
   # DEBUG
   # print('allocated_events')
   # pprint(allocated_events)
 
+  # allocate task ids into user checklist
+  
   events = []
   events.extend(get_events(allocatable_tasks_time_ranges['work'], time_zone))
   events.extend(get_events(allocatable_tasks_time_ranges['personal'], time_zone))
-
+  
   dt3 = datetime.now() # DEBUG
 
   # DEBUG
@@ -145,6 +141,7 @@ def add_task_time_blocks_to_calendar(id):
 
   dt_total2 = datetime.now() # DEBUG
   runtime_total = dt_total2 - dt_total1 # DEBUG
+
 
   # DEBUG
   return {

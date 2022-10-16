@@ -1,4 +1,4 @@
-from calendar_schedule import add_task_time_blocks_to_calendar
+from calendar_schedule import add_task_time_blocks_to_calendar_and_add_task_ids_to_checklist
 from models import User
 from datetime import timedelta
 
@@ -6,7 +6,7 @@ print('Enter the user\'s email address:')
 email = input()
 user = User.query.filter_by(email=email).first()
 
-runtimes = add_task_time_blocks_to_calendar(user.id)
+runtimes = add_task_time_blocks_to_calendar_and_add_task_ids_to_checklist(user.id)
 print('runtime_algorithm:')
 print(timedelta(seconds=runtimes['runtime_algorithm']['seconds'], microseconds=runtimes['runtime_algorithm']['microseconds']))
 print('runtime_calendar:')
