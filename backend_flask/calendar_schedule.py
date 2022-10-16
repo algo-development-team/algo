@@ -1,5 +1,5 @@
 from recommendation_algorithm import get_tasks_with_highest_relative_priority
-from user_calendar_data import get_user_events_time_range
+from user_calendar_data import get_user_events_time_range, get_user_calendar_id_list
 from models import Task, User, TaskType
 from app import db
 from googleapiclient.discovery import build
@@ -79,6 +79,18 @@ def get_first_time_and_last_time(allocatable_tasks_time_ranges):
 
   return (first_time, last_time)
 
+def get_new_checklist(allocatable_tasks_time_ranges):
+  task_ids_and_first_time = []
+  for task_id_str in allocatable_tasks_time_ranges['work']:
+    if len(allocatable_tasks_time_ranges['work'][task_id_str]['time_ranges']) >= 1:
+      task_ids_and_first_time.append({ 'id': int(task_id_str), 'first_time': allocatable_tasks_time_ranges['work'][task_id_str]['time_ranges'][0][0] })
+  for task_id_str in allocatable_tasks_time_ranges['personal']:
+    if len(allocatable_tasks_time_ranges['personal'][task_id_str]['time_ranges']) >= 1:
+      task_ids_and_first_time.append({ 'id': int(task_id_str), 'first_time': allocatable_tasks_time_ranges['personal'][task_id_str]['time_ranges'][0][0] })
+  task_ids_and_first_time = sorted(task_ids_and_first_time, key=lambda task_id_and_first_time: task_id_and_first_time['first_time'])
+  new_checklist = [task_id_and_first_time['id'] for task_id_and_first_time in task_ids_and_first_time]
+  return new_checklist
+
 def add_task_time_blocks_to_calendar_and_add_task_ids_to_checklist(id):
   dt_total1 = datetime.now() # DEBUG
 
@@ -90,13 +102,8 @@ def add_task_time_blocks_to_calendar_and_add_task_ids_to_checklist(id):
   time_zone = service.settings().get(setting='timezone').execute()
   time_zone = time_zone['value']
 
-  calendar_list = service.calendarList().list(
-      maxResults=250,
-      showDeleted=False,
-      showHidden=False,
-    ).execute()
-  calendar_ids = [calendar['id'] for calendar in calendar_list['items']]
-  calendar_ids_time_zones = [{ 'id': calendar['id'], 'time_zone': calendar['timeZone'] } for calendar in calendar_list['items']]
+  calendar_ids_time_zones = get_user_calendar_id_list(id, 250, fetch_next_pages=True, include_time_zone=True)
+  calendar_ids = [calendar_id_time_zone['id'] for calendar_id_time_zone in calendar_ids_time_zones]
   if user.calendar_id not in calendar_ids:
     calendar = {
       'summary': 'Algo',
@@ -107,13 +114,13 @@ def add_task_time_blocks_to_calendar_and_add_task_ids_to_checklist(id):
     db.session.commit()
   else:
     calendar_time_zone = [calendar['time_zone'] for calendar in calendar_ids_time_zones if calendar['id'] == user.calendar_id][0]
-    print('calendar_time_zone: ', calendar_time_zone) # DEBUG
     if calendar_time_zone != time_zone:
       calendar = {
         'summary': 'Algo',
         'timeZone': time_zone,
       }
       calendar = service.calendars().update(calendarId=user.calendar_id, body=calendar).execute()
+  
   calendar_id = user.calendar_id
 
   dt1 = datetime.now() # DEBUG
@@ -127,21 +134,7 @@ def add_task_time_blocks_to_calendar_and_add_task_ids_to_checklist(id):
   # print('allocatable_tasks_time_ranges:')
   # pprint(allocatable_tasks_time_ranges)
 
-  task_ids_and_first_time = []
-  for task_id_str in allocatable_tasks_time_ranges['work']:
-    if len(allocatable_tasks_time_ranges['work'][task_id_str]['time_ranges']) >= 1:
-      task_ids_and_first_time.append({ 'id': int(task_id_str), 'first_time': allocatable_tasks_time_ranges['work'][task_id_str]['time_ranges'][0][0] })
-  for task_id_str in allocatable_tasks_time_ranges['personal']:
-    if len(allocatable_tasks_time_ranges['personal'][task_id_str]['time_ranges']) >= 1:
-      task_ids_and_first_time.append({ 'id': int(task_id_str), 'first_time': allocatable_tasks_time_ranges['personal'][task_id_str]['time_ranges'][0][0] })
-  task_ids_and_first_time = sorted(task_ids_and_first_time, key=lambda task_id_and_first_time: task_id_and_first_time['first_time'])
-  new_checklist = [task_id_and_first_time['id'] for task_id_and_first_time in task_ids_and_first_time]
-
-  # DEBUG
-  # print('new_checklist:')
-  # pprint(new_checklist)
-
-  user.checklist = new_checklist
+  user.checklist = get_new_checklist(allocatable_tasks_time_ranges)
   db.session.commit()
 
   (first_time, last_time) = get_first_time_and_last_time(allocatable_tasks_time_ranges)

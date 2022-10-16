@@ -41,20 +41,43 @@ def get_user_time_zone(id):
   return time_zone['value']
 
 # helper function
-def get_user_calendar_id_list(id):
+def get_user_calendar_id_list(id, max_results, fetch_next_pages=False, include_time_zone=False):
   user = User.query.get(id)
   creds = Credentials(token=None, refresh_token=user.refresh_token, token_uri=TOKEN_URI, client_id=CLIENT_ID, client_secret=CLIENT_SECRET)
   service = build('calendar', 'v3', credentials=creds)
 
-  calendar_list = service.calendarList().list(
-    maxResults=50,
+  response = service.calendarList().list(
+    maxResults=max_results,
     showDeleted=False,
     showHidden=False,
   ).execute()
 
-  calendar_id_list = [calendar['id'] for calendar in calendar_list['items']]
- 
-  return calendar_id_list
+  calendarItems = response.get('items')
+
+  if not fetch_next_pages:
+    calendar_ids = [calendar['id'] for calendar in calendarItems]
+    return calendar_ids
+
+  nextPageToken = response.get('nextPageToken')
+
+  while nextPageToken:
+    response = service.calendarList().list(
+      maxResults=250,
+      showDeleted=False,
+      showHidden=False,
+      pageToken=nextPageToken,
+    ).execute()
+    calendarItems.extend(response.get('items'))
+    nextPageToken = response.get('nextPageToken')
+  
+  
+  calendar_ids = []
+  if include_time_zone:
+    calendar_ids = [{ 'id': calendar['id'], 'time_zone': calendar['timeZone'] } for calendar in calendarItems]
+  else:
+    calendar_ids = [calendar['id'] for calendar in calendarItems]
+
+  return calendar_ids
 
 # helper function
 # parameter specification:
@@ -90,12 +113,11 @@ def get_user_events_time_range(id, time_min, time_max, algo=False, include_event
   time_min_str = time_min_with_buffer.strftime('%Y-%m-%dT%H:%M:00Z')
   time_max_str = time_max_with_buffer.strftime('%Y-%m-%dT%H:%M:00Z')
   events = []
-  result = []
   calendar_id_list = []
   if algo:
     calendar_id_list.append(user.calendar_id)
   else:
-    calendar_id_list = get_user_calendar_id_list(id)
+    calendar_id_list = get_user_calendar_id_list(id, 50, fetch_next_pages=False, include_time_zone=False)
     calendar_id_list = [calendar_id for calendar_id in calendar_id_list if calendar_id != user.calendar_id]
   for calendar_id in calendar_id_list:
     events_result = service.events().list(calendarId=calendar_id, timeMin=time_min_str, timeMax=time_max_str, singleEvents=True, orderBy='startTime').execute()
