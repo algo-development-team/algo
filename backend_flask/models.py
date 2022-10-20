@@ -188,7 +188,7 @@ class Task(db.Model):
   title = db.Column(db.String(10000), nullable=False)
   description = db.Column(db.String(10000), nullable=False)
   priority = db.Column(Enum(Priority), nullable=False)
-  deadline = db.Column(db.DateTime)
+  deadline = db.Column(db.DateTime, nullable=False)
   time_length = db.Column(Enum(TimeLength), nullable=False)
   completed = db.Column(db.Boolean, nullable=False, default=False)
   user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
