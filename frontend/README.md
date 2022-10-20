@@ -1,7 +1,24 @@
-## Building Todoist from Scratch Using React (Custom Hooks, Context), Firebase & React Testing Library (http://bit.ly/CognitiveSurge)
+# Frontend
 
-This application (a Todoist clone) was built using create-react-app as a base, and the technologies used were React (Custom Hooks, Context), Firebase & React Testing Library. I'm hoping this gives people a better understanding of React, and I've also included SCSS in this tutorial, but the main focus is to build a real application using React! If you clone this application, click the Pizza icon on the top right, it enables dark mode!
+- This is the frontend directory of the Algo MVP platform.
+- Built in React, SCSS, and Firebase.
+- The Firebase code will be replaced with HTTP requests to the backend_flask.
 
-Subscribe to my YouTube channel here: http://bit.ly/CognitiveSurge where I build projects like this! And don't forget, you can contribute to this project (highly encouraged!). One thing I didn't get time to do was incorporate accessibility into this application, so I'd love to see that added!
+---
 
-![Preview](todoist-preview.png?raw=true)
+Source Code:
+
+- [Original Tutorial: Todoist Clone](https://www.youtube.com/watch?v=hT3j87FMR6M&t=60s)
+- [Original GitHub Repo: Todoist Clone](https://github.com/algo-development-team/algo/tree/main/frontend)
+
+---
+
+Note:
+
+- (Currently): Create a project and a database in Firebase and populate it with data as shown in [Original Tutorial: Todoist Clone](https://www.youtube.com/watch?v=hT3j87FMR6M&t=60s).
+- (Currently): Copy the .env variables from the Firebase Web-version source code, and store them in the .env file.
+- Run `npm install` to install all dependencies.
+- Run `npm run start` to start the development server.
+- (Currently): When the error shows in the console log, create an index in the Firebase database following the link in the error.
+
+---
