@@ -1,8 +1,8 @@
-# Frontend
+# Frontend Auth Example
 
-- This is the frontend directory of the Algo MVP platform.
+- This is the frontend Google OAuth2 example directory of the Algo MVP platform.
 - Built in React.
-- Currently in development.
+- For code referencing.
 
 ---
 
