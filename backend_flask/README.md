@@ -1,7 +1,7 @@
 # Backend Flask
 
-- This is the official backend for the Algo MVP platform built in Flask.
-- Currently in development.
+- Example backend implementing recommendation algorithm to input tasks into the user's Google Calendar and generate a checklist.
+- Built in Flask and PostgreSQL.
 
 ---
 
