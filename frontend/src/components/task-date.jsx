@@ -1,56 +1,54 @@
-import { ReactComponent as ScheduleIcon } from "assets/svg/scheduler.svg";
-import moment from "moment";
+import { ReactComponent as ScheduleIcon } from 'assets/svg/scheduler.svg'
+import moment from 'moment'
 
 export const TaskDate = ({ date }) => {
-  moment.defaultFormat = "DD-MM-YYYY";
+  moment.defaultFormat = 'DD-MM-YYYY'
 
-  const isToday = moment(date).isSame(moment().format("DD-MM-YYYY"));
+  const dateInMoment = moment(date, 'DD-MM-YYYY')
+  const today = moment().startOf('day')
+  const yesterday = moment().startOf('day').subtract(1, 'day')
+  const tomorrow = moment().startOf('day').add(1, 'day')
 
-  const isYesterday = moment(date).isSame(moment().subtract(1, "day").format("DD-MM-YYYY"));
-  const isTomorrow = moment(date).isSame(moment().add(1, "day").format("DD-MM-YYYY"));
-  const isNextWeek = moment(date).isSame(moment().add(7, "day").format("DD-MM-YYYY"));
-  const isPast = moment(date).isBefore(moment().format("DD-MM-YYYY"));
-  const isWeekend = moment(date, moment.defaultFormat).format("dddd") == ("Saturday" || "Sunday");
+  const isToday = dateInMoment.isSame(today)
+  const isYesterday = dateInMoment.isSame(yesterday)
+  const isTomorrow = dateInMoment.isSame(tomorrow)
+  const isPast = dateInMoment.isBefore(today)
   //console.log("DATE!!!!!!!!!!!!!", moment(date, moment.defaultFormat).format("dddd"), isWeekend, date);
 
   //todo: rename this function
   const getDateCustomClass = () => {
     if (isToday) {
-      return "date__today";
+      return 'date__today'
     }
     if (isTomorrow) {
-      return "date__tomorrow";
+      return 'date__tomorrow'
     }
     if (isPast || isYesterday) {
-      return "date__overdue";
+      return 'date__overdue'
     }
-    if (isNextWeek) {
-      return "date__next-week";
-    }
-    if (isWeekend) {
-      return "date__weekend";
-    }
-  };
+    return 'date__next-week'
+  }
   const getDayName = () => {
     if (isToday) {
-      return "Today";
+      return 'Today'
     }
     if (isTomorrow) {
-      return "Tomorrow";
+      return 'Tomorrow'
     }
     if (isYesterday) {
-      return "Yesterday";
+      return 'Yesterday'
     }
-    if (isWeekend) {
-      return moment(date, moment.defaultFormat).format("dddd");
-    }
-    return moment(date, moment.defaultFormat).format("MMM DD");
-  };
+    // if (isWeekend) {
+    //   return moment(date, moment.defaultFormat).format("dddd");
+    // }
+    return moment(date, moment.defaultFormat).format('MMM DD')
+    // return moment(date, moment.defaultFormat).format('dddd')
+  }
   return (
     <span className={`task__date ${getDateCustomClass()}`}>
-      <ScheduleIcon width="14px" height="14px" />
+      <ScheduleIcon width='14px' height='14px' />
       {/* {moment(date, moment.defaultFormat).format("DD MMM")} */}
       {getDayName()}
     </span>
-  );
-};
+  )
+}

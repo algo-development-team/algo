@@ -50,11 +50,9 @@ export const AuthProvider = ({ children }) => {
     e.preventDefault()
     signInWithPopup(auth, provider)
       .then((result) => {
-        const user = result.user
+        const user = result.user // user contains the refresh token
         setCurrentUser(user)
         localStorage.setItem('userAuth', JSON.stringify(user))
-        // DEBUG
-        console.log('signinGoogle ran...')
         console.log(JSON.stringify(user))
         navigate('/app/Inbox')
       })
@@ -107,10 +105,6 @@ export const AuthProvider = ({ children }) => {
       setLoading(false)
       if (userAuth) {
         const userRef = await createUserProfileDocument(userAuth)
-        // DEBUG
-        console.log('unsubscribe ran...')
-        console.log('userAuth: ', userAuth)
-        console.log('userRef: ', userRef)
         onSnapshot(userRef, (snapshot) => {
           const snapshotData = snapshot.data()
           const missingFieldValuePairs =
@@ -123,8 +117,6 @@ export const AuthProvider = ({ children }) => {
             email: snapshotData.email,
             id: snapshot.id,
           }
-          // DEBUG
-          console.log('user: ', user)
           setCurrentUser(user)
 
           localStorage.setItem('userAuth', JSON.stringify(user))
