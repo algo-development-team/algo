@@ -49,7 +49,7 @@ export const SetNewTaskSchedulePopper = ({
     const today = moment().startOf('day')
     const daysDiff = customDateFormatted.diff(today, 'days')
     setSchedule({
-      day: 'Custom',
+      day: moment().add(daysDiff, 'day').format('DD MMM'),
       date: moment().add(daysDiff, 'day').format('DD-MM-YYYY'),
     })
     isQuickAdd ? setShowPopup(false) : closeOverlay()
@@ -132,13 +132,16 @@ export const SetNewTaskSchedulePopper = ({
           </li>
           <li className='set-schedule__popper--option'>
             <div className=''></div>
-            <div onClick={() => setCustom()}>
-              <NextWeekIcon fill={'grey'} />
-              <p className='set-new-task__schedule--name'>Custom</p>
-              <p className='set-new-task__schedule--weekday'>
-                {moment().format('ddd')}
-              </p>
-            </div>
+            <NextWeekIcon fill={'grey'} />
+            <p
+              className='set-new-task__schedule--name'
+              onClick={() => setCustom()}
+            >
+              Custom
+            </p>
+            <p className='set-new-task__schedule--weekday'>
+              {moment().format('ddd')}
+            </p>
             <input
               type='date'
               value={customDate}
