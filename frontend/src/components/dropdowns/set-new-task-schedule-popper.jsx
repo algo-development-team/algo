@@ -139,12 +139,15 @@ export const SetNewTaskSchedulePopper = ({
             >
               Custom
             </p>
-            <p className='set-new-task__schedule--weekday'>
+            <p
+              className='set-new-task__schedule--weekday'
+              style={{ visibility: 'hidden' }}
+            >
               {moment().format('ddd')}
             </p>
             <input
               type='date'
-              style={{ color: 'grey' }}
+              style={{ color: 'grey', background: 'transparent', border: 0 }}
               value={customDate}
               onChange={(e) => setCustomDate(e.target.value)}
             />
