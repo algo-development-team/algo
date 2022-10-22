@@ -1,6 +1,5 @@
 # Algo MVP Platform
 
-- This is the source code for the Algo MVP Platform.
-- Currently in development.
+- This is the example source code for the Algo MVP Platform.
 
 ---
