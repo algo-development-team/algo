@@ -7,7 +7,7 @@ import {
   signOut,
   signInWithRedirect,
 } from 'firebase/auth'
-import { onSnapshot } from 'firebase/firestore'
+import { onSnapshot, updateDoc } from 'firebase/firestore'
 import { getAuth, updateProfile } from 'firebase/auth'
 import { Navigate, useNavigate } from 'react-router-dom'
 
@@ -54,6 +54,7 @@ export const AuthProvider = ({ children }) => {
         setCurrentUser(user)
         localStorage.setItem('userAuth', JSON.stringify(user))
         // DEBUG
+        console.log('signinGoogle ran...')
         console.log(JSON.stringify(user))
         navigate('/app/Inbox')
       })
@@ -76,15 +77,54 @@ export const AuthProvider = ({ children }) => {
   }
 
   useEffect(() => {
+    const getMissingFieldValuePairsInUser = (snapshotData) => {
+      const defaultRankings = new Array(24).fill(50)
+      const fieldValuePairs = [
+        ['refreshToken', null],
+        ['workTimeRange', '9:00-17:00'],
+        ['sleepTimeRange', '23:00-07:00'],
+        ['workDays', [false, true, true, true, true, true, false]],
+        ['isSetup', false],
+        ['calendarId', null],
+        ['checklist', []],
+        ['urgentRankingsWw', defaultRankings],
+        ['deepRankingsWw', defaultRankings],
+        ['shallowRankingsWw', defaultRankings],
+        ['urgentRankingsPw', defaultRankings],
+        ['deepRankingsPw', defaultRankings],
+        ['shallowRankingsPw', defaultRankings],
+        ['urgentRankingsPnw', defaultRankings],
+        ['deepRankingsPnw', defaultRankings],
+        ['shallowRankingsPnw', defaultRankings],
+      ]
+      let missingFieldValuePairs = fieldValuePairs.filter(
+        (fieldValuePair) => !snapshotData[fieldValuePair[0]],
+      )
+      missingFieldValuePairs = Object.fromEntries(missingFieldValuePairs)
+      return missingFieldValuePairs
+    }
     const unsubscribe = auth.onAuthStateChanged(async (userAuth) => {
       setLoading(false)
       if (userAuth) {
         const userRef = await createUserProfileDocument(userAuth)
+        // DEBUG
+        console.log('unsubscribe ran...')
+        console.log('userAuth: ', userAuth)
+        console.log('userRef: ', userRef)
         onSnapshot(userRef, (snapshot) => {
+          const snapshotData = snapshot.data()
+          const missingFieldValuePairs =
+            getMissingFieldValuePairsInUser(snapshotData)
+          if (Object.keys(missingFieldValuePairs).length > 0) {
+            updateDoc(userRef, missingFieldValuePairs)
+          }
           const user = {
-            ...snapshot.data(),
+            displayName: snapshotData.displayName,
+            email: snapshotData.email,
             id: snapshot.id,
           }
+          // DEBUG
+          console.log('user: ', user)
           setCurrentUser(user)
 
           localStorage.setItem('userAuth', JSON.stringify(user))
