@@ -144,6 +144,7 @@ export const SetNewTaskSchedulePopper = ({
             </p>
             <input
               type='date'
+              style={{ color: 'grey' }}
               value={customDate}
               onChange={(e) => setCustomDate(e.target.value)}
             />
